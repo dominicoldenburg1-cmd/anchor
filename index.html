@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Goal Tracker</title>
+<meta name="theme-color" content="#EEF1F5">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Goals">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme: light;
+  --bg:#EEF1F5;
+  --card:#FFFFFF;
+  --ink:#15202B;
+  --muted:#6B7785;
+  --accent:#1D5BD6;
+  --accent-soft:#DCE7FB;
+  --done:#1E9E6A;
+  --warn:#D98A12;
+  --no:#C8493F;
+  --line:#E1E6EC;
+  --display:'Fraunces',Georgia,serif;
+  --body:'DM Sans',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);display:flex;justify-content:center;align-items:center;-webkit-tap-highlight-color:transparent}
+.phone{width:100%;max-width:400px;height:100%;max-height:820px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
+@media (min-width:600px){
+  .phone{height:820px;border-radius:44px;border:10px solid #15202B;box-shadow:0 24px 60px rgba(21,32,43,.25)}
+}
+.top{padding:calc(env(safe-area-inset-top) + 22px) 20px 0}
+.seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.screen{flex:1;overflow-y:auto;padding:18px 20px calc(env(safe-area-inset-bottom) + 24px)}
+.hidden{display:none}
+.eyebrow{font-size:13px;color:var(--muted);margin:0 0 2px}
+h1{font:700 30px/1.1 var(--display);margin:0 0 16px;text-wrap:balance}
+.progress-card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.pct{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
+.count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:14px;background:var(--accent-soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .45s cubic-bezier(.3,.8,.3,1)}
+.bar.complete i{background:var(--done)}
+.msg{font-size:14px;color:var(--muted);margin:12px 0 0}
+h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:4px 6px 4px 4px}
+.goal{flex:1;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;font:500 16px var(--body);color:var(--ink);padding:10px 8px;cursor:pointer;min-height:48px}
+.box{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #B5C0CC;display:grid;place-items:center;transition:all .2s}
+.box svg{width:15px;height:15px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.5);transition:all .2s}
+li.done .box{background:var(--done);border-color:var(--done)}
+li.done .box svg{opacity:1;transform:scale(1)}
+li.done .goal span{color:var(--muted);text-decoration:line-through}
+.del{border:0;background:none;color:#9AA6B3;font-size:22px;width:40px;height:40px;cursor:pointer;border-radius:10px}
+.add{display:flex;gap:8px;margin-top:12px}
+.add input,.wgoal input{flex:1;font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;width:100%}
+.add button{border:0;background:var(--accent);color:#fff;font:500 15px var(--body);padding:0 18px;border-radius:12px;cursor:pointer}
+.note{font-size:12px;color:var(--muted);margin-top:18px}
+.wgoal label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+/* Answer log */
+.log li{padding:12px 14px;gap:10px;justify-content:space-between}
+.log .what{display:flex;flex-direction:column;min-width:0}
+.log .what b{font:500 15px var(--body);overflow-wrap:anywhere}
+.log .what small{font-size:12px;color:var(--muted)}
+.pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
+.pill.Yes{background:var(--done)}
+.pill.Partly{background:var(--warn)}
+.pill.No{background:var(--no)}
+.empty{font-size:14px;color:var(--muted);background:var(--card);border-radius:14px;padding:14px}
+.tabdot{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:99px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;margin-left:6px;padding:0 5px}
+
+/* Home screen mock */
+.home{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%);margin:-18px -20px 0;padding:24px 20px;min-height:100%;display:flex;flex-direction:column;gap:18px}
+.clock{color:#fff;text-align:center;font:600 54px/1 var(--display);margin-top:6px;text-shadow:0 2px 12px rgba(0,0,0,.15)}
+.clock small{display:block;font:500 15px var(--body);margin-bottom:6px;opacity:.9}
+.w{background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-radius:24px;padding:18px;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.12);min-height:158px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.w-label{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.w-goal{font:700 24px/1.15 var(--display);margin:4px 0 0;text-wrap:balance;overflow-wrap:anywhere}
+.w-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.w-btns button{border:0;border-radius:14px;padding:13px 0;font:700 15px var(--body);color:#fff;cursor:pointer}
+.w-btns button:active{transform:scale(.96)}
+.w-btns .Yes{background:var(--done)}
+.w-btns .Partly{background:var(--warn)}
+.w-btns .No{background:var(--no)}
+.w-thanks{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1}
+.w-thanks .big{font:700 24px var(--display)}
+.w-thanks p{margin:0;font-size:14px;color:var(--muted)}
+.hint{color:#fff;font-size:12px;text-align:center;opacity:.95;margin:0}
+.reset{align-self:center;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff;font:500 13px var(--body);padding:8px 14px;border-radius:99px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="top">
+    <div class="seg" role="tablist">
+      <button role="tab" id="tab-app" aria-selected="true">App<span class="tabdot hidden" id="tabdot">0</span></button>
+      <button role="tab" id="tab-home" aria-selected="false">Widget</button>
+    </div>
+  </div>
+
+  <main class="screen" id="screen-app">
+    <p class="eyebrow">Today</p>
+    <h1>My goals</h1>
+    <section class="progress-card" aria-label="Progress">
+      <div class="progress-head">
+        <span class="pct" id="pct">0%</span>
+        <span class="count" id="count">0 of 0 done</span>
+      </div>
+      <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="fill"></i></div>
+      <p class="msg" id="msg"></p>
+    </section>
+    <h2>Checklist</h2>
+    <ul id="list"></ul>
+    <form class="add" id="form">
+      <input id="newgoal" type="text" placeholder="Add a goal" autocomplete="off" aria-label="New goal">
+      <button type="submit">Add</button>
+    </form>
+
+    <h2>Widget goal</h2>
+    <div class="wgoal">
+      <label for="wgoal">What the widget asks you each day</label>
+      <input id="wgoal" type="text" maxlength="60" autocomplete="off">
+    </div>
+
+    <h2>Widget answers</h2>
+    <ul class="log" id="log"></ul>
+    <p class="note">Sample goals for the prototype. Tell me your real ones and what to change.</p>
+  </main>
+
+  <main class="screen hidden" id="screen-home">
+    <div class="home">
+      <div class="clock"><small id="datelabel"></small><span id="timelabel"></span></div>
+      <div class="w" id="widget" aria-label="Goal widget"></div>
+      <p class="hint">Tap an answer. It gets logged in the App tab.</p>
+      <button class="reset" id="reset" type="button">Reset widget to test again</button>
+    </div>
+  </main>
+</div>
+
+<script>
+var goals = [
+  {t:"Write the one-line pitch", d:true},
+  {t:"Talk to 5 possible customers", d:false},
+  {t:"Sketch the first screen", d:false},
+  {t:"Pick a name", d:false},
+  {t:"Practice the 2-minute demo", d:false}
+];
+var widgetGoal = "Read 20 pages";
+var log = [];      // {goal, answer, ts}
+var answered = null; // answer shown on widget now, or null
+var unseen = 0;
+
+try{
+  var s = JSON.parse(localStorage.getItem("goals-proto2"));
+  if(s){
+    if(Array.isArray(s.goals) && s.goals.length) goals = s.goals;
+    if(typeof s.widgetGoal === "string" && s.widgetGoal) widgetGoal = s.widgetGoal;
+    if(Array.isArray(s.log)) log = s.log;
+    if(s.answered) answered = s.answered;
+  }
+}catch(e){}
+function save(){ try{ localStorage.setItem("goals-proto2", JSON.stringify({goals:goals,widgetGoal:widgetGoal,log:log,answered:answered})); }catch(e){} }
+var $ = function(id){ return document.getElementById(id); };
+var check = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+
+function clock(){
+  var n = new Date();
+  $("datelabel").textContent = n.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  $("timelabel").textContent = n.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M/i,"");
+}
+function when(ts){
+  var d = new Date(ts);
+  return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}) + ", " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
+}
+
+function renderWidget(){
+  var w = $("widget");
+  if(answered){
+    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+answered+'</b> for "'+esc(widgetGoal)+'".</p></div>';
+  }else{
+    w.innerHTML = '<div><span class="w-label">Today\'s goal</span><p class="w-goal">'+esc(widgetGoal)+'</p></div>' +
+      '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
+  }
+}
+
+function render(){
+  var done = goals.filter(function(g){return g.d;}).length, total = goals.length;
+  var pct = total ? Math.round(done/total*100) : 0;
+  $("pct").textContent = pct + "%";
+  $("count").textContent = done + " of " + total + " done";
+  $("fill").style.width = pct + "%";
+  $("bar").classList.toggle("complete", pct===100);
+  $("bar").setAttribute("aria-valuenow", pct);
+  $("msg").textContent = total===0 ? "Add your first goal below." : pct===100 ? "All goals done. Nice work." : (total-done) + " to go.";
+
+  $("list").innerHTML = goals.map(function(g,i){
+    return '<li class="'+(g.d?'done':'')+'"><button class="goal" data-i="'+i+'" aria-pressed="'+g.d+'"><span class="box">'+check+'</span><span>'+esc(g.t)+'</span></button><button class="del" data-del="'+i+'" aria-label="Delete goal">&times;</button></li>';
+  }).join("");
+
+  $("log").innerHTML = log.length ? log.slice().reverse().map(function(e){
+    return '<li><div class="what"><b>'+esc(e.goal)+'</b><small>'+when(e.ts)+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></li>';
+  }).join("") : '<li class="empty" style="display:block">No answers yet. Answer from the Widget tab and it shows up here.</li>';
+
+  var dot = $("tabdot");
+  dot.textContent = unseen; dot.classList.toggle("hidden", unseen===0);
+  renderWidget();
+  save();
+}
+
+$("list").addEventListener("click", function(e){
+  var t = e.target.closest("button"); if(!t) return;
+  if(t.dataset.del !== undefined){ goals.splice(+t.dataset.del,1); render(); }
+  else if(t.dataset.i !== undefined){ goals[+t.dataset.i].d = !goals[+t.dataset.i].d; render(); }
+});
+$("form").addEventListener("submit", function(e){
+  e.preventDefault();
+  var v = $("newgoal").value.trim(); if(!v) return;
+  goals.push({t:v,d:false}); $("newgoal").value=""; render();
+});
+$("wgoal").value = widgetGoal;
+$("wgoal").addEventListener("input", function(){
+  widgetGoal = this.value.trim() || "Read 20 pages";
+  answered = null; renderWidget(); save();
+});
+$("widget").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-a]"); if(!b) return;
+  answered = b.dataset.a;
+  log.push({goal:widgetGoal, answer:answered, ts:Date.now()});
+  unseen++; render();
+});
+$("reset").onclick = function(){ answered = null; render(); };
+
+function tab(which){
+  var app = which==="app";
+  $("screen-app").classList.toggle("hidden", !app);
+  $("screen-home").classList.toggle("hidden", app);
+  $("tab-app").setAttribute("aria-selected", app);
+  $("tab-home").setAttribute("aria-selected", !app);
+  if(app){ unseen = 0; render(); }
+}
+$("tab-app").onclick = function(){ tab("app"); };
+$("tab-home").onclick = function(){ tab("home"); };
+clock(); setInterval(clock, 30000);
+render();
+if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
+</script>
+</body>
+</html>
