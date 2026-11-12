@@ -128,6 +128,28 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ach .txt .bar{margin-top:8px}
 .ach .txt em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
 .ach li.earned .txt em{color:var(--done);font-weight:700}
+/* Plan maker */
+.daysel{display:flex;gap:6px;margin-bottom:8px}
+.daysel button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px var(--body);padding:11px 0;border-radius:12px;cursor:pointer}
+.daysel button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.goalform .alt{align-self:center;margin-top:8px}
+.goalform button:disabled{opacity:.6;cursor:default}
+.errtxt{color:var(--no);font-size:13px;margin:0 0 8px}
+.draft{background:var(--card);border-radius:20px;padding:16px;margin-bottom:18px}
+.draft h3{font:700 18px var(--body);margin:0 0 4px;overflow-wrap:anywhere}
+.draft .sub{margin-bottom:12px}
+.draft ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.draft li{background:none;padding:0;gap:8px;border-radius:0}
+.draft li span{flex:none;width:48px;font-size:12px;color:var(--muted);font-weight:700}
+.draft li input{flex:1;font:400 15px var(--body);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0;width:100%}
+.draft .row{display:flex;gap:8px;margin-top:14px}
+.draft .row button{flex:1;padding:13px;border-radius:12px;font:700 15px var(--body);cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.draft .row button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.glist details{width:100%}
+.glist summary{cursor:pointer;font-size:13px;color:var(--accent);margin-top:8px;font-weight:500}
+.glist .plan{margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);list-style:none}
+.glist .plan li{display:block;background:none;padding:0;border-radius:0}
+.glist .plan li.now{color:var(--ink);font-weight:700}
 /* Widget tab (prototype only) */
 .banner{background:#FFF4DC;color:#7A5200;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
 .seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
@@ -166,14 +188,25 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
   <main class="screen hidden" id="screen-goals">
     <p class="eyebrow">What you're working toward</p>
     <h1>Goals</h1>
-    <p class="sub">Pick one or a couple, up to 3. For each, choose one small step to take every day.</p>
+    <p class="sub">Pick one or a couple, up to 3. Tell us the goal and we'll plan what to do each day.</p>
     <form class="goalform" id="form">
       <label for="newgoal">Your goal</label>
-      <input id="newgoal" type="text" maxlength="60" placeholder="Read more books" autocomplete="off">
-      <label for="newstep">Daily step</label>
-      <input id="newstep" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
-      <button type="submit">Add goal</button>
+      <input id="newgoal" type="text" maxlength="120" placeholder="Learn to cook five dinners" autocomplete="off">
+      <div id="planopts">
+        <label>How many days should the plan last?</label>
+        <div class="daysel" id="daysel">
+          <button type="button" data-days="7" aria-pressed="true">7 days</button>
+          <button type="button" data-days="14" aria-pressed="false">14 days</button>
+          <button type="button" data-days="30" aria-pressed="false">30 days</button>
+        </div>
+      </div>
+      <label for="newstep" class="hidden" id="steplabel">Daily step</label>
+      <input id="newstep" class="hidden" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
+      <p class="errtxt hidden" id="planerr" role="alert"></p>
+      <button type="submit" id="makeplan">Make my plan</button>
+      <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
     </form>
+    <div class="draft hidden" id="draft"></div>
     <p class="sub hidden" id="capnote">You have 3 goals, which is the most you can track. Delete one to add another.</p>
     <ul class="glist" id="goallist"></ul>
   </main>
@@ -275,6 +308,15 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} 
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
 
+/* Plans: a goal has either a day-by-day plan (plan + start) or one repeating step */
+function dayIndex(g){ return Math.max(0, dayNum(today()) - dayNum(g.start || today())); }
+function stepOf(g){
+  if(g.plan && g.plan.length){ var i = dayIndex(g); return i < g.plan.length ? g.plan[i] : null; }
+  return g.step || null;
+}
+function dayLabel(g){ return (g.plan && g.plan.length) ? (dayIndex(g) < g.plan.length ? "Day " + (dayIndex(g)+1) + " of " + g.plan.length : "Plan finished") : ""; }
+function activeGoals(){ return S.goals.filter(function(g){ return !!stepOf(g); }); }
+
 /* Answers */
 function dayMap(gid){          // date -> last answer that day
   var m = {};
@@ -328,20 +370,67 @@ function earnedList(){
 }
 
 /* Render */
+var draft = null, manual = false, planDays = 7, planning = false;
+
+function showErr(msg){ $("planerr").textContent = msg; $("planerr").classList.toggle("hidden", !msg); }
+
+function renderForm(){
+  $("planopts").classList.toggle("hidden", manual);
+  $("newstep").classList.toggle("hidden", !manual);
+  $("steplabel").classList.toggle("hidden", !manual);
+  $("makeplan").textContent = manual ? "Add goal" : (planning ? "Making your plan..." : "Make my plan");
+  $("makeplan").disabled = planning;
+  $("manualtoggle").textContent = manual ? "Make a plan for me instead" : "I'll write my own daily step";
+  Array.prototype.forEach.call($("daysel").children, function(b){ b.setAttribute("aria-pressed", +b.dataset.days === planDays); });
+}
+
+function renderDraft(){
+  var d = $("draft");
+  if(!draft){ d.classList.add("hidden"); d.innerHTML = ""; return; }
+  d.classList.remove("hidden");
+  d.innerHTML = '<h3>'+esc(draft.goal)+'</h3><p class="sub">Here is your '+draft.steps.length+'-day plan. Change any day you like, then save.</p><ol>' +
+    draft.steps.map(function(s,i){ return '<li><span>Day '+(i+1)+'</span><input type="text" maxlength="80" value="'+esc(s).replace(/"/g,"&quot;")+'" data-d="'+i+'" aria-label="Day '+(i+1)+'"></li>'; }).join("") +
+    '</ol><div class="row"><button type="button" data-act="redo">Start over</button><button type="button" class="primary" data-act="save">Save goal</button></div>';
+}
+
 function renderGoals(){
   var full = S.goals.length >= MAX_GOALS;
-  $("form").classList.toggle("hidden", full);
+  $("form").classList.toggle("hidden", full || !!draft);
   $("capnote").classList.toggle("hidden", !full);
+  renderForm(); renderDraft();
   $("goallist").innerHTML = S.goals.length ? S.goals.map(function(g){
-    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>Daily step: '+esc(g.step)+'</span></div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
+    var hasPlan = g.plan && g.plan.length, st = stepOf(g);
+    var meta = hasPlan ? (st ? dayLabel(g) + ': ' + esc(st) : 'Plan finished. Nice work.') : 'Daily step: ' + esc(g.step);
+    var det = hasPlan ? '<details><summary>See the full plan</summary><ol class="plan">' + g.plan.map(function(s,i){
+      return '<li class="'+(i === dayIndex(g) ? 'now' : '')+'">Day '+(i+1)+': '+esc(s)+'</li>';
+    }).join("") + '</ol></details>' : '';
+    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>'+meta+'</span>'+det+'</div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
   }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
+}
+
+function makePlan(goal, days){
+  planning = true; showErr(""); renderForm();
+  fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days})})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+    .then(function(x){
+      planning = false;
+      if(x.ok && Array.isArray(x.j.steps) && x.j.steps.length){
+        draft = {goal:goal, steps:x.j.steps.map(String)}; showErr("");
+      }else if(x.j && x.j.error === "not_configured"){
+        showErr("The plan maker isn't connected yet. You can write your own daily step for now.");
+      }else{
+        showErr("Couldn't make a plan. Try again, or write your own daily step.");
+      }
+      render();
+    })
+    .catch(function(){ planning = false; showErr("Couldn't reach the plan maker. Check your connection and try again."); render(); });
 }
 
 var flashTimer = null;
 function renderWidget(){
   var w = $("widget");
   var mode = S.wsize === "home" ? "home" : "lock";
-  var pending = S.goals.filter(function(g){ return !todayAns(g.id); });
+  var pending = activeGoals().filter(function(g){ return !todayAns(g.id); });
   var html;
   if(mode === "lock"){
     if(flash){
@@ -350,7 +439,7 @@ function renderWidget(){
       html = '<div class="lw"><div class="lw-thanks"><span>Add a goal in the app to start</span></div></div>';
     }else if(pending.length){
       var g = pending[0];
-      html = '<div class="lw"><div><div class="lw-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left' : '')+'</div><p class="lw-step">'+esc(g.step)+'</p></div>' +
+      html = '<div class="lw"><div><div class="lw-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left' : '')+'</div><p class="lw-step">'+esc(stepOf(g))+'</p></div>' +
         '<div class="lw-btns"><button data-a="Yes">Yes</button><button data-a="Partly">Partly</button><button data-a="No">No</button></div></div>';
     }else{
       html = '<div class="lw"><div class="lw-thanks"><b>All checked in</b><span>Thank you! See you tomorrow.</span><button class="linkbtn" id="undo" type="button">Undo last answer</button></div></div>';
@@ -363,7 +452,7 @@ function renderWidget(){
       inner = '<div class="w-thanks"><span class="w-label">Daily check-in</span><p>Add a goal in the app to start.</p></div>';
     }else if(pending.length){
       var g2 = pending[0];
-      inner = '<div><span class="w-label">'+esc(g2.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(g2.step)+'</p><p class="w-q">Did you do it today?</p></div>' +
+      inner = '<div><span class="w-label">'+esc(g2.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(stepOf(g2))+'</p><p class="w-q">Did you do it today?</p></div>' +
         '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
     }else{
       inner = '<div class="w-thanks"><span class="w-label">All checked in</span><span class="big">Thank you!</span><p>See you tomorrow.</p><button class="linkbtn" id="undo" type="button">Undo last answer</button></div>';
@@ -383,15 +472,15 @@ function renderWidget(){
 
 function renderWidgetTab(){
   $("statelist").innerHTML = S.goals.length ? S.goals.map(function(g){
-    var a = todayAns(g.id);
-    return '<li><div class="what"><b>'+esc(g.step)+'</b><small>'+esc(g.goal)+'</small></div><span class="pill '+(a||"none")+'">'+(a||"Not yet")+'</span></li>';
+    var a = todayAns(g.id), st = stepOf(g);
+    return '<li><div class="what"><b>'+(st ? esc(st) : 'Plan finished')+'</b><small>'+esc(g.goal)+(dayLabel(g) && st ? ' &middot; '+dayLabel(g) : '')+'</small></div><span class="pill '+(a||"none")+'">'+(a||(st ? "Not yet" : "Done"))+'</span></li>';
   }).join("") : '<li class="empty">No goals yet.</li>';
 }
 
 function renderToday(){
   $("datelabel").textContent = new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-  var total = S.goals.length, sum = 0, answered = 0;
-  S.goals.forEach(function(g){ var a = todayAns(g.id); if(a){ answered++; sum += score(a); } });
+  var act = activeGoals(), total = act.length, sum = 0, answered = 0;
+  act.forEach(function(g){ var a = todayAns(g.id); if(a){ answered++; sum += score(a); } });
   var pct = total ? Math.round(sum / total * 100) : 0;
   $("pct").textContent = pct + "%";
   $("count").textContent = total ? answered + " of " + total + " checked in" : "";
@@ -405,8 +494,9 @@ function renderToday(){
   var days = [];
   for(var i = 6; i >= 0; i--){ var d = new Date(); d.setDate(d.getDate() - i); days.push({key:ymd(d), l:d.toLocaleDateString(undefined,{weekday:"narrow"}), t:i===0}); }
   $("goalcards").innerHTML = S.goals.length ? S.goals.map(function(g){
-    var m = dayMap(g.id), a = m[today()], st = streak(g.id);
-    return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+esc(g.step)+'</span></div><span class="pill '+(a||"none")+'">'+(a||"Not yet")+'</span></div>' +
+    var m = dayMap(g.id), a = m[today()], st = streak(g.id), cur = stepOf(g);
+    var line = cur ? (dayLabel(g) ? dayLabel(g) + ': ' : '') + esc(cur) : 'Plan finished. Nice work.';
+    return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+line+'</span></div><span class="pill '+(a||"none")+'">'+(a||(cur ? "Not yet" : "Done"))+'</span></div>' +
       '<div class="week" aria-label="Last 7 days">' + days.map(function(x){ return '<div class="'+(x.t?'tod':'')+'"><i class="'+(m[x.key]||"")+'"></i><small>'+x.l+'</small></div>'; }).join("") + '</div>' +
       '<div class="streakline">'+(st > 0 ? '<b>'+st+(st===1?' day':' days')+'</b> in a row' : 'No streak yet')+'</div></div>';
   }).join("") : '<div class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></div>';
@@ -439,10 +529,33 @@ function render(){
 /* Events */
 $("form").addEventListener("submit", function(e){
   e.preventDefault();
-  var g = $("newgoal").value.trim(), st = $("newstep").value.trim();
-  if(!g || !st || S.goals.length >= MAX_GOALS) return;
-  S.goals.push({id:uid(), goal:g, step:st});
-  $("newgoal").value = ""; $("newstep").value = ""; render();
+  var g = $("newgoal").value.trim();
+  if(!g || S.goals.length >= MAX_GOALS || planning) return;
+  if(manual){
+    var st = $("newstep").value.trim(); if(!st) return;
+    S.goals.push({id:uid(), goal:g, step:st});
+    $("newgoal").value = ""; $("newstep").value = ""; showErr(""); render();
+  }else{
+    makePlan(g, planDays);
+  }
+});
+$("daysel").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-days]"); if(!b) return;
+  planDays = +b.dataset.days; renderForm();
+});
+$("manualtoggle").addEventListener("click", function(){ manual = !manual; showErr(""); renderForm(); });
+$("draft").addEventListener("input", function(e){
+  var i = e.target.dataset && e.target.dataset.d; if(i === undefined || !draft) return;
+  draft.steps[+i] = e.target.value;
+});
+$("draft").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-act]"); if(!b || !draft) return;
+  if(b.dataset.act === "redo"){ draft = null; render(); return; }
+  if(b.dataset.act === "save"){
+    var steps = draft.steps.map(function(s){ return String(s).trim() || ("Work on: " + draft.goal); });
+    S.goals.push({id:uid(), goal:draft.goal, plan:steps, start:today()});
+    draft = null; $("newgoal").value = ""; render();
+  }
 });
 $("goallist").addEventListener("click", function(e){
   var b = e.target.closest("button[data-del]"); if(!b) return;
@@ -462,9 +575,9 @@ $("widget").addEventListener("click", function(e){
     render(); return;
   }
   if(b.dataset.a){
-    var g = S.goals.filter(function(x){ return !todayAns(x.id); })[0]; if(!g) return;
-    S.log.push({gid:g.id, goal:g.goal, step:g.step, answer:b.dataset.a, ts:Date.now()});
-    flash = {answer:b.dataset.a, step:g.step};
+    var g = activeGoals().filter(function(x){ return !todayAns(x.id); })[0]; if(!g) return;
+    S.log.push({gid:g.id, goal:g.goal, step:stepOf(g), answer:b.dataset.a, ts:Date.now()});
+    flash = {answer:b.dataset.a, step:stepOf(g)};
     clearTimeout(flashTimer);
     flashTimer = setTimeout(function(){ flash = null; renderWidget(); }, 1600);
     render();
