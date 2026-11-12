@@ -137,13 +137,13 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .vid-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .vid-top b{font:700 18px var(--body);overflow-wrap:anywhere}
 .vid-x{border:0;background:rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:50%;font-size:24px;line-height:1;cursor:pointer;flex:none}
-.vid-stage{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:44vh;width:100%;display:flex;justify-content:center}
+.vid-stage{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:56vh;width:100%;display:flex;justify-content:center}
 .vid-stage video{height:100%;width:100%;object-fit:cover;background:#000}
 .vid-stage video.mirror{transform:scaleX(-1)}
-.vid-timer{position:absolute;top:10px;left:10px;background:rgba(200,73,63,.95);color:#fff;font:700 13px var(--body);padding:5px 10px;border-radius:99px;font-variant-numeric:tabular-nums}
+.vid-timer{z-index:3;position:absolute;top:10px;left:10px;background:rgba(200,73,63,.95);color:#fff;font:700 13px var(--body);padding:5px 10px;border-radius:99px;font-variant-numeric:tabular-nums}
 .vid-bar{height:6px;background:rgba(255,255,255,.22);border-radius:99px;overflow:hidden}
 .vid-bar i{display:block;height:100%;width:0;background:#E5584D}
-.vid-prompts{margin:0;padding:0 0 0 20px;font-size:15px;line-height:1.45;display:flex;flex-direction:column;gap:4px;color:rgba(255,255,255,.92)}
+.vid-prompts{position:absolute;left:0;right:0;bottom:0;margin:0;padding:40px 14px 14px 36px;font-size:16px;line-height:1.4;display:flex;flex-direction:column;gap:3px;color:#fff;background:linear-gradient(to top,rgba(0,0,0,.82),rgba(0,0,0,0));text-shadow:0 1px 3px rgba(0,0,0,.6);z-index:2;text-align:left}
 .vid-note{font-size:13px;color:rgba(255,255,255,.7);margin:0}
 .vid-msg{font-size:14px;color:#FFB4AE;margin:0}
 .vid-actions{display:flex;gap:10px;margin-top:auto}
@@ -151,12 +151,22 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .vid-actions button.rec{background:#E5584D}
 .vid-actions button.primary{background:var(--accent)}
 .vid-actions button.danger{color:#FFB4AE}
+/* Sign in */
+.auth{position:absolute;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px);overflow-y:auto}
+.auth-in{width:100%}
+.authtabs{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
+.authtabs button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
+.authtabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.acct-line{margin:0 0 4px;font-size:15px}
 /* Plan maker */
 .daysel{display:flex;gap:6px;margin-bottom:8px}
 .daysel button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px var(--body);padding:11px 0;border-radius:12px;cursor:pointer}
 .daysel button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 .goalform .alt{align-self:center;margin-top:8px}
 .goalform button:disabled{opacity:.6;cursor:default}
+.hint2{font-size:12px;color:var(--muted);margin:-2px 0 10px}
+.draft input.dp{width:100%;font:400 15px var(--body);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:12px}
+.draft .dl{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
 .errtxt{color:var(--no);font-size:13px;margin:0 0 8px}
 .draft{background:var(--card);border-radius:20px;padding:16px;margin-bottom:18px}
 .draft h3{font:700 18px var(--body);margin:0 0 4px;overflow-wrap:anywhere}
@@ -247,6 +257,9 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
       </div>
       <label for="newstep" class="hidden" id="steplabel">Daily step</label>
       <input id="newstep" class="hidden" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
+      <label for="newpartly">What counts as partly?</label>
+      <input id="newpartly" type="text" maxlength="80" placeholder="Read at least 5 pages" autocomplete="off">
+      <p class="hint2">Yes means you did the day's step. Say what Partly looks like for this goal.</p>
       <p class="errtxt hidden" id="planerr" role="alert"></p>
       <button type="submit" id="makeplan">Make my plan</button>
       <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
@@ -290,7 +303,8 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 
   <main class="screen hidden" id="screen-social">
     <h1>Social</h1>
-    <div class="soon">Coming soon</div>
+    <div class="card" id="acct"></div>
+    <div class="soon" style="margin-top:12px">Coming soon</div>
   </main>
 
   <main class="screen hidden" id="screen-widget">
@@ -346,18 +360,39 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 
   <div class="vid hidden" id="vid" role="dialog" aria-modal="true" aria-labelledby="vidtitle">
     <div class="vid-top"><b id="vidtitle"></b><button type="button" class="vid-x" id="vidclose" aria-label="Close">&times;</button></div>
-    <div class="vid-stage"><video id="vidview" playsinline muted></video><span class="vid-timer hidden" id="vidtimer">0:00 / 1:00</span></div>
-    <div class="vid-bar hidden" id="vidbar"><i id="vidfill"></i></div>
-    <p class="vid-note" id="vidnote"></p>
-    <ol class="vid-prompts" id="vidprompts">
+    <div class="vid-stage"><video id="vidview" playsinline muted></video><span class="vid-timer hidden" id="vidtimer">0:00 / 1:00</span>
+      <ol class="vid-prompts" id="vidprompts">
       <li>What is your goal?</li>
       <li>Why are you doing it?</li>
       <li>What do you hope to gain?</li>
       <li>What will happen if you don't achieve it?</li>
     </ol>
+    </div>
+    <div class="vid-bar hidden" id="vidbar"><i id="vidfill"></i></div>
+    <p class="vid-note" id="vidnote"></p>
     <p class="vid-msg hidden" id="vidmsg" role="alert"></p>
     <div class="vid-actions" id="vidactions"></div>
     <input type="file" accept="video/*" capture="user" id="vidfile" class="hidden">
+  </div>
+
+  <div class="auth" id="auth">
+    <div class="auth-in">
+      <h1>Anchor</h1>
+      <p class="sub" id="authsub">Sign in to pick up where you left off.</p>
+      <div class="authtabs" role="tablist" aria-label="Account">
+        <button type="button" role="tab" id="am-signin" data-mode="signin" aria-selected="true">Sign in</button>
+        <button type="button" role="tab" id="am-signup" data-mode="signup" aria-selected="false">Create account</button>
+      </div>
+      <form class="goalform" id="authform">
+        <label for="authuser">Username</label>
+        <input id="authuser" type="text" maxlength="20" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
+        <label for="authpass">Password</label>
+        <input id="authpass" type="password" maxlength="100" autocomplete="current-password">
+        <p class="hint2 hidden" id="authhint">Usernames are 3 to 20 letters, numbers or underscores. Passwords need at least 8 characters.</p>
+        <p class="errtxt hidden" id="autherr" role="alert"></p>
+        <button type="submit" id="authgo">Sign in</button>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -366,6 +401,7 @@ var KEY = "anchor-v4";
 var MAX_GOALS = 3;
 var S = {goals:[], log:[], seenAch:[]};   // goal: {id, goal, step}   log: {gid, goal, step, answer, ts}
 var tabNow = "today";
+var USER = null, LOCKED = true, syncT = null;   // LOCKED: nothing is saved until we know who is using the app
 var flash = null;
 
 function uid(){ return "g" + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
@@ -382,7 +418,11 @@ function keyFromNum(n){ var d = new Date(n * 86400000); return d.getUTCFullYear(
   }catch(e){}
   S.goals = [{id:uid(), goal:"Read more books", step:"Read 20 pages"}];
 })();
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
+function save(){
+  if(LOCKED) return;
+  try{ localStorage.setItem(USER ? "anchor-u-" + USER : KEY, JSON.stringify(S)); }catch(e){}
+  pushState(false);
+}
 
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
@@ -467,7 +507,8 @@ function renderDraft(){
   var d = $("draft");
   if(!draft){ d.classList.add("hidden"); d.innerHTML = ""; return; }
   d.classList.remove("hidden");
-  d.innerHTML = '<h3>'+esc(draft.goal)+'</h3><p class="sub">Here is your '+draft.steps.length+'-day plan. Change any day you like, then save.</p><ol>' +
+  d.innerHTML = '<h3>'+esc(draft.goal)+'</h3><p class="sub">Here is your '+draft.steps.length+'-day plan. Change any day you like, then save.</p>' +
+    '<label class="dl" for="dpartly">What counts as partly?</label><input id="dpartly" class="dp" type="text" maxlength="80" data-p="1" placeholder="Optional" value="'+esc(draft.partly || "").replace(/"/g,"&quot;")+'"><ol>' +
     draft.steps.map(function(s,i){ return '<li><span>Day '+(i+1)+'</span><input type="text" maxlength="80" value="'+esc(s).replace(/"/g,"&quot;")+'" data-d="'+i+'" aria-label="Day '+(i+1)+'"></li>'; }).join("") +
     '</ol><div class="row"><button type="button" data-act="redo">Start over</button><button type="button" class="primary" data-act="save">Save goal</button></div>';
 }
@@ -485,18 +526,18 @@ function renderGoals(){
       return '<li class="'+(i === dayIndex(g) ? 'now' : '')+'">Day '+(i+1)+': '+esc(s)+'</li>';
     }).join("") + '</ol></details>' : '';
     var vb = '<button type="button" class="linkbtn vlink" data-vid="'+g.id+'" data-m="'+(g.video ? 'watch' : 'rec')+'">'+(g.video ? 'Watch your why video' : 'Record your why video')+'</button>';
-    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>'+meta+'</span>'+vb+det+'</div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
+    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>'+meta+'</span>'+(g.partly ? '<span>Partly: '+esc(g.partly)+'</span>' : '')+vb+det+'</div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
   }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
 }
 
-function makePlan(goal, days){
+function makePlan(goal, days, partly){
   planning = true; showErr(""); renderForm();
   fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days})})
     .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
     .then(function(x){
       planning = false;
       if(x.ok && Array.isArray(x.j.steps) && x.j.steps.length){
-        draft = {goal:goal, steps:x.j.steps.map(String)}; showErr("");
+        draft = {goal:goal, steps:x.j.steps.map(String), partly:partly || ""}; showErr("");
       }else if(x.j && x.j.error === "not_configured"){
         showErr("The plan maker isn't connected yet. You can write your own daily step for now.");
       }else{
@@ -519,7 +560,7 @@ function slideHtml(g, mode){
   if(a){
     inner = '<div class="w-thanks"><span class="w-label">'+esc(g.goal)+'</span><span class="big">Thank you!</span><p>You answered <b>'+a+'</b> for "'+esc(st)+'".</p><button class="linkbtn" data-undo="'+g.id+'" type="button">Undo</button></div>';
   }else{
-    inner = '<div><span class="w-label">'+esc(g.goal)+'</span><p class="w-goal">'+esc(st)+'</p><p class="w-q">Did you do it today?</p></div>' +
+    inner = '<div><span class="w-label">'+esc(g.goal)+'</span><p class="w-goal">'+esc(st)+'</p><p class="w-q">Did you do it today?</p>'+(g.partly ? '<p class="w-q">Partly: '+esc(g.partly)+'</p>' : '')+'</div>' +
       '<div class="w-btns"><button class="Yes" data-a="Yes" data-g="'+g.id+'">Yes</button><button class="Partly" data-a="Partly" data-g="'+g.id+'">Partly</button><button class="No" data-a="No" data-g="'+g.id+'">No</button></div>';
   }
   return '<div class="slide"><div class="w"><div class="w-in">'+inner+'</div></div></div>';
@@ -583,6 +624,12 @@ function renderHistory(){
   box.innerHTML = out.join("");
 }
 
+function renderSocial(){
+  $("acct").innerHTML = USER
+    ? '<p class="acct-line">Signed in as <b>@'+esc(USER)+'</b></p><button class="btn2" id="logout" type="button">Log out</button>'
+    : '<p class="acct-line">Not signed in. Accounts are not set up yet.</p>';
+}
+
 function renderWidgetTab(){
   $("statelist").innerHTML = S.goals.length ? S.goals.map(function(g){
     var a = todayAns(g.id), st = stepOf(g);
@@ -609,7 +656,7 @@ function renderToday(){
   $("goalcards").innerHTML = S.goals.length ? S.goals.map(function(g){
     var m = dayMap(g.id), a = m[today()], st = streak(g.id), cur = stepOf(g);
     var line = cur ? (dayLabel(g) ? dayLabel(g) + ': ' : '') + esc(cur) : 'Plan finished. Nice work.';
-    return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+line+'</span></div><span class="pill '+(a||"none")+'">'+(a||(cur ? "Not yet" : "Done"))+'</span></div>' +
+    return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+line+'</span>'+(g.partly ? '<span class="step">Partly: '+esc(g.partly)+'</span>' : '')+'</div><span class="pill '+(a||"none")+'">'+(a||(cur ? "Not yet" : "Done"))+'</span></div>' +
       '<div class="week" aria-label="Last 7 days">' + days.map(function(x){ return '<div class="'+(x.t?'tod':'')+'"><i class="'+(m[x.key]||"")+'"></i><small>'+x.l+'</small></div>'; }).join("") + '</div>' +
       '<div class="streakline">'+(st > 0 ? '<b>'+st+(st===1?' day':' days')+'</b> in a row' : 'No streak yet')+(g.video ? ' &middot; <button class="linkbtn" data-vid="'+g.id+'" data-m="watch" type="button">Watch your why</button>' : '')+'</div></div>';
   }).join("") : '<div class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></div>';
@@ -635,7 +682,7 @@ function updateDot(){
 }
 
 function render(){
-  renderGoals(); renderToday(); renderAch(); renderHistory(); renderWidgetTab(); updateDot();
+  renderGoals(); renderToday(); renderAch(); renderHistory(); renderWidgetTab(); renderSocial(); updateDot();
   save();
 }
 
@@ -647,11 +694,12 @@ $("form").addEventListener("submit", function(e){
   if(manual){
     var st = $("newstep").value.trim(); if(!st) return;
     var ng = {id:uid(), goal:g, step:st};
+    var pt = $("newpartly").value.trim(); if(pt) ng.partly = pt;
     S.goals.push(ng);
-    $("newgoal").value = ""; $("newstep").value = ""; showErr(""); adding = false; render();
+    $("newgoal").value = ""; $("newstep").value = ""; $("newpartly").value = ""; showErr(""); adding = false; render();
     openVideo(ng.id, "rec");
   }else{
-    makePlan(g, planDays);
+    makePlan(g, planDays, $("newpartly").value.trim());
   }
 });
 $("daysel").addEventListener("click", function(e){
@@ -660,6 +708,7 @@ $("daysel").addEventListener("click", function(e){
 });
 $("manualtoggle").addEventListener("click", function(){ manual = !manual; showErr(""); renderForm(); });
 $("draft").addEventListener("input", function(e){
+  if(e.target.dataset && e.target.dataset.p){ if(draft) draft.partly = e.target.value; return; }
   var i = e.target.dataset && e.target.dataset.d; if(i === undefined || !draft) return;
   draft.steps[+i] = e.target.value;
 });
@@ -669,8 +718,9 @@ $("draft").addEventListener("click", function(e){
   if(b.dataset.act === "save"){
     var steps = draft.steps.map(function(s){ return String(s).trim() || ("Work on: " + draft.goal); });
     var ng2 = {id:uid(), goal:draft.goal, plan:steps, start:today()};
+    if(draft.partly && draft.partly.trim()) ng2.partly = draft.partly.trim();
     S.goals.push(ng2);
-    draft = null; $("newgoal").value = ""; adding = false; render();
+    draft = null; $("newgoal").value = ""; $("newpartly").value = ""; adding = false; render();
     openVideo(ng2.id, "rec");
   }
 });
@@ -678,7 +728,7 @@ $("addbtn").addEventListener("click", function(){
   adding = true; render(); $("newgoal").focus();
 });
 $("canceladd").addEventListener("click", function(){
-  adding = false; draft = null; manual = false; showErr(""); $("newgoal").value = ""; $("newstep").value = ""; render();
+  adding = false; draft = null; manual = false; showErr(""); $("newgoal").value = ""; $("newstep").value = ""; $("newpartly").value = ""; render();
 });
 $("goallist").addEventListener("click", function(e){
   var v = e.target.closest("button[data-vid]");
@@ -898,7 +948,99 @@ document.querySelector(".tabs").addEventListener("click", function(e){
 });
 document.addEventListener("visibilitychange", function(){ if(!document.hidden) render(); });
 
+/* Accounts */
+var authMode = "signin";
+function showAuth(){ $("auth").classList.remove("hidden"); LOCKED = true; }
+function hideAuth(){ $("auth").classList.add("hidden"); LOCKED = false; }
+function authErr(t){ $("autherr").textContent = t || ""; $("autherr").classList.toggle("hidden", !t); }
+function setAuthMode(m){
+  authMode = m;
+  $("am-signin").setAttribute("aria-selected", m === "signin");
+  $("am-signup").setAttribute("aria-selected", m === "signup");
+  $("authgo").textContent = m === "signup" ? "Create account" : "Sign in";
+  $("authpass").autocomplete = m === "signup" ? "new-password" : "current-password";
+  $("authhint").classList.toggle("hidden", m !== "signup");
+  $("authsub").textContent = m === "signup" ? "Make an account to keep your goals on any phone." : "Sign in to pick up where you left off.";
+  authErr("");
+}
+function readLocal(key){ try{ var o = JSON.parse(localStorage.getItem(key)); return o && Array.isArray(o.goals) ? o : null; }catch(e){ return null; } }
+function applyState(s){
+  S = {goals:[], log:[], seenAch:[], wsize:"lock"};
+  if(s && Array.isArray(s.goals)){
+    S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : [];
+    S.wsize = s.wsize === "home" ? "home" : "lock";
+  }
+  slideIdx = null; draft = null; adding = false; manual = false;
+}
+function enterAccount(username, serverState){
+  USER = username;
+  try{ localStorage.setItem("anchor-lastuser", username); }catch(e){}
+  applyState(serverState || readLocal("anchor-u-" + username));
+  hideAuth(); setTab("today");
+}
+function pushState(now){
+  if(!USER) return;
+  clearTimeout(syncT);
+  var go = function(){
+    if(!USER) return;
+    fetch("/api/state", {method:"PUT", headers:{"content-type":"application/json"}, body:JSON.stringify(S)})
+      .then(function(r){ if(r.status === 401){ showAuth(); authErr("Your session ended. Sign in again."); } })
+      .catch(function(){});
+  };
+  if(now) go(); else syncT = setTimeout(go, 800);
+}
+function loadMe(){
+  return fetch("/api/me").then(function(r){
+    if(r.status === 401){ showAuth(); return; }
+    if(!r.ok){ USER = null; hideAuth(); return; }          // accounts not set up: use the app without them
+    return r.json().then(function(j){ enterAccount(j.username, j.state); });
+  });
+}
+function boot(){
+  loadMe().catch(function(){
+    var lu = null; try{ lu = localStorage.getItem("anchor-lastuser"); }catch(e){}
+    if(lu){ USER = lu; applyState(readLocal("anchor-u-" + lu)); hideAuth(); setTab("today"); }
+    else { showAuth(); authErr("Can't reach the server. Check your connection and try again."); }
+  });
+}
+$("am-signin").addEventListener("click", function(){ setAuthMode("signin"); });
+$("am-signup").addEventListener("click", function(){ setAuthMode("signup"); });
+$("authform").addEventListener("submit", function(e){
+  e.preventDefault(); authErr("");
+  var u = $("authuser").value.trim(), pw = $("authpass").value;
+  if(!u || !pw) return;
+  var signup = authMode === "signup";
+  $("authgo").disabled = true;
+  fetch("/api/" + (signup ? "signup" : "login"), {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:u, password:pw})})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+    .then(function(x){
+      $("authgo").disabled = false;
+      if(!x.ok){ authErr(x.j.message || "Couldn't sign in. Try again."); return; }
+      $("authpass").value = "";
+      if(signup){
+        // first account on this phone keeps whatever was already saved here
+        var carried = null;
+        try{ if(!localStorage.getItem("anchor-carried")){ carried = readLocal(KEY); localStorage.setItem("anchor-carried", "1"); } }catch(e){}
+        USER = x.j.username;
+        try{ localStorage.setItem("anchor-lastuser", USER); }catch(e){}
+        applyState(carried); hideAuth(); setTab("today"); pushState(true);
+      }else{
+        return loadMe();
+      }
+    })
+    .catch(function(){ $("authgo").disabled = false; authErr("Couldn't reach the server. Try again."); });
+});
+$("acct").addEventListener("click", function(e){
+  if(!e.target.closest("#logout")) return;
+  clearTimeout(syncT);
+  fetch("/api/logout", {method:"POST"}).catch(function(){}).then(function(){
+    USER = null; try{ localStorage.removeItem("anchor-lastuser"); }catch(e){}
+    applyState(null); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
+  });
+});
+
 render();
+boot();
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 </script>
 </body>
