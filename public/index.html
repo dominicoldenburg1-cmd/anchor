@@ -46,10 +46,10 @@ h1{font:700 30px/1.1 var(--display);margin:0 0 6px;text-wrap:balance}
 h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px}
 
 /* Bottom tabs */
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(env(safe-area-inset-bottom) + 6px)}
-.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 11px var(--body);color:var(--muted);cursor:pointer;border-radius:12px}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 2px calc(env(safe-area-inset-bottom) + 6px)}
+.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 10px var(--body);color:var(--muted);cursor:pointer;border-radius:12px;min-width:0}
 .tabs button.proto{border-left:1px dashed var(--line)}
-.tabs svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tabs svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
 .tabs .badge{position:relative}
 .tabs .badge i{position:absolute;top:-2px;right:-6px;width:9px;height:9px;border-radius:50%;background:var(--no);border:2px solid var(--card)}
@@ -173,6 +173,17 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .glist .plan{margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);list-style:none}
 .glist .plan li{display:block;background:none;padding:0;border-radius:0}
 .glist .plan li.now{color:var(--ink);font-weight:700}
+/* History + Social */
+.hday{background:var(--card);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.hhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}
+.hhead b{font:700 16px var(--body)}
+.hhead span{font-size:12px;color:var(--muted);text-align:right}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.hrow .what{display:flex;flex-direction:column;min-width:0}
+.hrow .what b{font:500 15px var(--body);overflow-wrap:anywhere}
+.hrow .what small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.hnone{margin:0;font-size:14px;color:var(--muted)}
+.soon{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;font:700 22px var(--display);color:var(--muted)}
 /* Widget tab (prototype only) */
 .banner{background:#FFF4DC;color:#7A5200;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
 .seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
@@ -271,6 +282,17 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <ul class="ach" id="achlist"></ul>
   </main>
 
+  <main class="screen hidden" id="screen-history">
+    <p class="eyebrow">Every day, every goal</p>
+    <h1>History</h1>
+    <div id="histlist"></div>
+  </main>
+
+  <main class="screen hidden" id="screen-social">
+    <h1>Social</h1>
+    <div class="soon">Coming soon</div>
+  </main>
+
   <main class="screen hidden" id="screen-widget">
     <p class="eyebrow">Prototype only</p>
     <h1>Widget</h1>
@@ -308,8 +330,14 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <button role="tab" id="tab-today" aria-selected="true" data-tab="today">
       <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Today
     </button>
-    <button role="tab" id="tab-ach" aria-selected="false" data-tab="ach">
-      <span class="badge"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><i class="hidden" id="achdot"></i></span>Achievements
+    <button role="tab" id="tab-ach" aria-selected="false" data-tab="ach" aria-label="Achievements">
+      <span class="badge"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><i class="hidden" id="achdot"></i></span>Awards
+    </button>
+    <button role="tab" id="tab-history" aria-selected="false" data-tab="history">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>History
+    </button>
+    <button role="tab" id="tab-social" aria-selected="false" data-tab="social">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.6-3 3-4.5 5.5-4.5s4.9 1.5 5.5 4.5"/><circle cx="17" cy="10" r="2.4"/><path d="M16.5 14.6c2.2.1 3.9 1.4 4.5 3.9"/></svg>Social
     </button>
     <button role="tab" id="tab-widget" class="proto" aria-selected="false" data-tab="widget">
       <svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="3"/><path d="M7.5 12h9"/></svg>Widget
@@ -530,6 +558,31 @@ function renderWidget(){
   $("locktime").textContent = now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M/i,"");
 }
 
+function renderHistory(){
+  var box = $("histlist");
+  if(!S.log.length){ box.innerHTML = '<div class="empty">No check-ins yet. Answer your daily check-in and each day shows up here.</div>'; return; }
+  var byDay = {}, first = Infinity;
+  S.log.forEach(function(e){
+    var k = ymd(new Date(e.ts));
+    (byDay[k] = byDay[k] || {})[e.gid] = e;      // last answer per goal per day
+    first = Math.min(first, dayNum(k));
+  });
+  var todayN = dayNum(today()), out = [];
+  for(var n = todayN; n >= first; n--){
+    var key = keyFromNum(n), p = key.split("-");
+    var d = new Date(+p[0], +p[1]-1, +p[2]);
+    var label = n === todayN ? "Today" : n === todayN - 1 ? "Yesterday" : d.toLocaleDateString(undefined,{weekday:"long"});
+    var sub = d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+    var es = byDay[key] ? Object.keys(byDay[key]).map(function(g){ return byDay[key][g]; }).sort(function(a,b){ return a.ts - b.ts; }) : [];
+    var tally = ["Yes","Partly","No"].map(function(a){ var c = es.filter(function(e){ return e.answer === a; }).length; return c ? c + " " + a : ""; }).filter(Boolean).join(", ");
+    out.push('<section class="hday"><div class="hhead"><b>'+label+' &middot; '+sub+'</b><span>'+(es.length ? tally : '')+'</span></div>' +
+      (es.length ? es.map(function(e){
+        return '<div class="hrow"><div class="what"><b>'+esc(e.goal)+'</b><small>'+esc(e.step || "")+' &middot; '+new Date(e.ts).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></div>';
+      }).join("") : '<p class="hnone">No check-ins</p>') + '</section>');
+  }
+  box.innerHTML = out.join("");
+}
+
 function renderWidgetTab(){
   $("statelist").innerHTML = S.goals.length ? S.goals.map(function(g){
     var a = todayAns(g.id), st = stepOf(g);
@@ -582,7 +635,7 @@ function updateDot(){
 }
 
 function render(){
-  renderGoals(); renderToday(); renderAch(); renderWidgetTab(); updateDot();
+  renderGoals(); renderToday(); renderAch(); renderHistory(); renderWidgetTab(); updateDot();
   save();
 }
 
@@ -834,7 +887,7 @@ $("vidclose").addEventListener("click", closeVideo);
 
 function setTab(name){
   tabNow = name;
-  ["goals","today","ach","widget"].forEach(function(n){
+  ["goals","today","ach","history","social","widget"].forEach(function(n){
     $("screen-"+n).classList.toggle("hidden", n !== name);
     $("tab-"+n).setAttribute("aria-selected", n === name);
   });
