@@ -65,33 +65,31 @@ h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color
 .msg{font-size:14px;color:var(--muted);margin:12px 0 0}
 ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:4px 6px 4px 4px}
-.goal{flex:1;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;font:500 16px var(--body);color:var(--ink);padding:10px 8px;cursor:pointer;min-height:48px}
-.box{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid #B5C0CC;display:grid;place-items:center;transition:all .2s}
-.box svg{width:15px;height:15px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:0;transform:scale(.5);transition:all .2s}
-li.done .box{background:var(--done);border-color:var(--done)}
-li.done .box svg{opacity:1;transform:scale(1)}
-li.done .goal span{color:var(--muted);text-decoration:line-through}
-.add{display:flex;gap:8px;margin:0 0 16px}
-.add input{flex:1;font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;width:100%}
-.add button{border:0;background:var(--accent);color:#fff;font:500 15px var(--body);padding:0 18px;border-radius:12px;cursor:pointer}
 .empty{font-size:14px;color:var(--muted);background:var(--card);border-radius:14px;padding:14px;display:block}
 .linkbtn{border:0;background:none;color:var(--accent);font:500 14px var(--body);padding:0;cursor:pointer;text-decoration:underline}
+.pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
+.pill.Yes{background:var(--done)}
+.pill.Partly{background:var(--warn)}
+.pill.No{background:var(--no)}
+.pill.none{background:#E6EAEF;color:var(--muted)}
 
 /* Goals tab */
-.grow{flex:1;min-width:0;padding:12px 8px;font:500 16px var(--body);overflow-wrap:anywhere}
-.grow small{display:block;font-size:12px;color:var(--accent);font-weight:700;margin-top:2px}
-.iconbtn{border:0;background:none;width:40px;height:40px;border-radius:10px;cursor:pointer;color:#9AA6B3;display:grid;place-items:center}
-.iconbtn svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.iconbtn.on{color:var(--warn)}
-.iconbtn.on svg{fill:var(--warn)}
-.iconbtn.x{font-size:24px;line-height:1}
+.goalform{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.goalform label{font-size:13px;color:var(--muted)}
+.goalform input{font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
+.goalform button{border:0;background:var(--accent);color:#fff;font:700 15px var(--body);padding:14px;border-radius:12px;cursor:pointer;margin-top:2px}
+.glist li{padding:14px 8px 14px 16px;align-items:flex-start}
+.glist .grow{flex:1;min-width:0}
+.glist .grow b{display:block;font:700 17px var(--body);overflow-wrap:anywhere}
+.glist .grow span{display:block;font-size:14px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.iconbtn{border:0;background:none;width:40px;height:40px;border-radius:10px;cursor:pointer;color:#9AA6B3;display:grid;place-items:center;font-size:24px;line-height:1}
 
 /* Today tab */
-.streak{display:inline-block;margin-top:12px;font:700 13px var(--body);color:var(--accent);background:var(--accent-soft);padding:5px 11px;border-radius:99px}
 .w{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%);border-radius:24px;padding:3px}
-.w-in{background:rgba(255,255,255,.95);border-radius:21px;padding:18px;min-height:158px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.w-in{background:rgba(255,255,255,.95);border-radius:21px;padding:18px;min-height:176px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
 .w-label{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.w-goal{font:700 24px/1.15 var(--display);margin:4px 0 0;text-wrap:balance;overflow-wrap:anywhere}
+.w-goal{font:700 24px/1.15 var(--display);margin:4px 0 2px;text-wrap:balance;overflow-wrap:anywhere}
+.w-q{font-size:14px;color:var(--muted);margin:0}
 .w-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .w-btns button{border:0;border-radius:14px;padding:13px 0;font:700 15px var(--body);color:#fff;cursor:pointer}
 .w-btns button:active{transform:scale(.96)}
@@ -101,15 +99,22 @@ li.done .goal span{color:var(--muted);text-decoration:line-through}
 .w-thanks{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1}
 .w-thanks .big{font:700 24px var(--display)}
 .w-thanks p{margin:0;font-size:14px;color:var(--muted)}
-.log li{padding:12px 14px;gap:10px;justify-content:space-between}
-.log .what{display:flex;flex-direction:column;min-width:0}
-.log .what b{font:500 15px var(--body);overflow-wrap:anywhere}
-.log .what small{font-size:12px;color:var(--muted)}
-.pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
-.pill.Yes{background:var(--done)}
-.pill.Partly{background:var(--warn)}
-.pill.No{background:var(--no)}
 .cap{font-size:12px;color:var(--muted);margin:8px 2px 0}
+.stack{display:flex;flex-direction:column;gap:10px}
+.gcard{background:var(--card);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.ghead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ghead b{display:block;font:700 17px var(--body);overflow-wrap:anywhere}
+.ghead span.step{display:block;font-size:14px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.week div{display:flex;flex-direction:column;align-items:center;gap:4px}
+.week i{width:22px;height:22px;border-radius:50%;background:#E6EAEF;display:block}
+.week i.Yes{background:var(--done)}
+.week i.Partly{background:var(--warn)}
+.week i.No{background:var(--no)}
+.week small{font-size:11px;color:var(--muted)}
+.week .tod small{color:var(--ink);font-weight:700}
+.streakline{font-size:13px;color:var(--muted)}
+.streakline b{color:var(--accent)}
 
 /* Achievements tab */
 .ach li{padding:14px;align-items:flex-start}
@@ -129,44 +134,44 @@ li.done .goal span{color:var(--muted);text-decoration:line-through}
 <div class="phone">
 
   <main class="screen hidden" id="screen-goals">
-    <p class="eyebrow">Everything you want to do each day</p>
+    <p class="eyebrow">What you're working toward</p>
     <h1>Goals</h1>
-    <p class="sub">Add as many as you like. Tap the star to choose the one the widget asks about.</p>
-    <form class="add" id="form">
-      <input id="newgoal" type="text" maxlength="60" placeholder="Add a goal, like Read 20 pages" autocomplete="off" aria-label="New goal">
-      <button type="submit">Add</button>
+    <p class="sub">Pick one or a couple, up to 3. For each, choose one small step to take every day.</p>
+    <form class="goalform" id="form">
+      <label for="newgoal">Your goal</label>
+      <input id="newgoal" type="text" maxlength="60" placeholder="Read more books" autocomplete="off">
+      <label for="newstep">Daily step</label>
+      <input id="newstep" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
+      <button type="submit">Add goal</button>
     </form>
-    <ul id="goallist"></ul>
+    <p class="sub hidden" id="capnote">You have 3 goals, which is the most you can track. Delete one to add another.</p>
+    <ul class="glist" id="goallist"></ul>
   </main>
 
   <main class="screen" id="screen-today">
     <p class="eyebrow" id="datelabel"></p>
     <h1>Today</h1>
-    <section class="card" aria-label="Progress">
+    <section class="card" aria-label="Today's progress">
       <div class="progress-head">
         <span class="pct" id="pct">0%</span>
-        <span class="count" id="count">0 of 0 done</span>
+        <span class="count" id="count"></span>
       </div>
       <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="fill"></i></div>
       <p class="msg" id="msg"></p>
-      <span class="streak hidden" id="streak"></span>
     </section>
 
-    <h2>Checklist</h2>
-    <ul id="todaylist"></ul>
-
-    <h2>Widget check-in</h2>
+    <h2>Daily check-in</h2>
     <div class="w"><div class="w-in" id="widget"></div></div>
-    <p class="cap">This is how the home-screen widget will look and work.</p>
+    <p class="cap">This is how the home-screen widget looks and works.</p>
 
-    <h2>Recent answers</h2>
-    <ul class="log" id="log"></ul>
+    <h2>Your goals</h2>
+    <div class="stack" id="goalcards"></div>
   </main>
 
   <main class="screen hidden" id="screen-ach">
     <p class="eyebrow" id="achsum"></p>
     <h1>Achievements</h1>
-    <p class="sub">Earned by checking off goals and answering the widget.</p>
+    <p class="sub">Earned by checking in on your daily steps.</p>
     <ul class="ach" id="achlist"></ul>
   </main>
 
@@ -184,109 +189,77 @@ li.done .goal span{color:var(--muted);text-decoration:line-through}
 </div>
 
 <script>
-var KEY = "anchor-v3";
-var S = {goals:[], checks:{}, days:{}, log:[], pin:null, seenAch:[]};
+var KEY = "anchor-v4";
+var MAX_GOALS = 3;
+var S = {goals:[], log:[], seenAch:[]};   // goal: {id, goal, step}   log: {gid, goal, step, answer, ts}
 var tabNow = "today";
+var flash = null;
 
 function uid(){ return "g" + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
-function ymd(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function pad(n){ return String(n).padStart(2,"0"); }
+function ymd(d){ return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()); }
 function today(){ return ymd(new Date()); }
 function dayNum(s){ var p = s.split("-"); return Date.UTC(+p[0], +p[1]-1, +p[2]) / 86400000; }
+function keyFromNum(n){ var d = new Date(n * 86400000); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth()+1) + "-" + pad(d.getUTCDate()); }
 
 (function load(){
-  var loaded = false;
   try{
     var s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.goals)){ S = Object.assign(S, s); loaded = true; }
+    if(s && Array.isArray(s.goals)){ S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : []; return; }
   }catch(e){}
-  if(!loaded){
-    // bring over goals and answers from the earlier version if present
-    try{
-      var o = JSON.parse(localStorage.getItem("goals-proto2"));
-      if(o && Array.isArray(o.goals) && o.goals.length){
-        var ids = [];
-        S.goals = o.goals.map(function(g){ var id = uid(); if(g.d) ids.push(id); return {id:id, t:g.t}; });
-        S.checks[today()] = ids;
-        if(Array.isArray(o.log)) S.log = o.log;
-        loaded = true;
-      }
-    }catch(e){}
-  }
-  if(!loaded){
-    S.goals = ["Read 20 pages","Talk to 5 possible customers","Sketch the first screen","Pick a name","Practice the 2-minute demo"].map(function(t){ return {id:uid(), t:t}; });
-  }
-  if(!S.pin || !S.goals.some(function(g){ return g.id===S.pin; })) S.pin = S.goals.length ? S.goals[0].id : null;
+  S.goals = [{id:uid(), goal:"Read more books", step:"Read 20 pages"}];
 })();
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
-var CHECK = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
 
-function doneIds(){ return S.checks[today()] || []; }
-function isDone(id){ return doneIds().indexOf(id) >= 0; }
-function counts(){
-  var done = S.goals.filter(function(g){ return isDone(g.id); }).length;
-  return {done:done, total:S.goals.length};
+/* Answers */
+function dayMap(gid){          // date -> last answer that day
+  var m = {};
+  S.log.forEach(function(e){ if(e.gid === gid) m[ymd(new Date(e.ts))] = e.answer; });
+  return m;
 }
-function recordDay(){
-  var c = counts();
-  if(c.total > 0 || S.days[today()]) S.days[today()] = c;
-}
-function perfect(date){ var d = S.days[date]; return !!(d && d.total > 0 && d.done >= d.total); }
-function currentStreak(){
-  var n = dayNum(today());
-  if(!perfect(today())) n -= 1;
+function todayAns(gid){ return dayMap(gid)[today()] || null; }
+function counts(a){ return a === "Yes" || a === "Partly"; }
+function score(a){ return a === "Yes" ? 1 : a === "Partly" ? 0.5 : 0; }
+function streak(gid){
+  var m = dayMap(gid), n = dayNum(today());
+  if(!counts(m[keyFromNum(n)])) n -= 1;
   var c = 0;
-  while(true){
-    var dt = new Date(n * 86400000);
-    var key = dt.getUTCFullYear() + "-" + String(dt.getUTCMonth()+1).padStart(2,"0") + "-" + String(dt.getUTCDate()).padStart(2,"0");
-    if(perfect(key)){ c++; n -= 1; } else break;
-  }
+  while(counts(m[keyFromNum(n)])){ c++; n -= 1; }
   return c;
 }
-function bestStreak(){
-  var ds = Object.keys(S.days).filter(perfect).map(dayNum).sort(function(a,b){return a-b;});
+function bestStreak(gid){
+  var m = dayMap(gid);
+  var ds = Object.keys(m).filter(function(k){ return counts(m[k]); }).map(dayNum).sort(function(a,b){ return a-b; });
   var best = 0, run = 0, prev = null;
   ds.forEach(function(d){ run = (prev !== null && d === prev + 1) ? run + 1 : 1; if(run > best) best = run; prev = d; });
   return best;
 }
-function answerFor(text){
-  var t = today(), found = null;
-  S.log.forEach(function(e){ if(e.goal === text && ymd(new Date(e.ts)) === t) found = e; });
-  return found;
-}
-function when(ts){
-  var d = new Date(ts);
-  return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}) + ", " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
-}
 
 /* Achievements */
 var ICON = {
-  step:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  chat:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   star:'<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z"/></svg>',
-  flame:'<svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.2 2 2.5C11 9 11 6 12 3z"/></svg>',
-  chat:'<svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-5 4V5z"/></svg>'
+  flame:'<svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.2 2 2.5C11 9 11 6 12 3z"/></svg>'
 };
 var ACH = [
-  {t:"First step", d:"Check off a goal", n:1, icon:"step", v:function(s){return s.checks;}},
-  {t:"Getting going", d:"Check off 10 goals", n:10, icon:"step", v:function(s){return s.checks;}},
-  {t:"On a roll", d:"Check off 50 goals", n:50, icon:"step", v:function(s){return s.checks;}},
-  {t:"Perfect day", d:"Finish every goal in one day", n:1, icon:"star", v:function(s){return s.perfectDays;}},
-  {t:"Three in a row", d:"Perfect days 3 days running", n:3, icon:"flame", v:function(s){return s.best;}},
-  {t:"One week strong", d:"Perfect days 7 days running", n:7, icon:"flame", v:function(s){return s.best;}},
-  {t:"Checked in", d:"Answer the widget once", n:1, icon:"chat", v:function(s){return s.answers;}},
-  {t:"Showing up", d:"Answer Yes on the widget 5 times", n:5, icon:"chat", v:function(s){return s.yes;}}
+  {t:"First check-in", d:"Answer the daily check-in once", n:1, icon:"chat", v:function(s){return s.answers;}},
+  {t:"Habit forming", d:"Check in 30 times", n:30, icon:"chat", v:function(s){return s.answers;}},
+  {t:"Full effort", d:"Answer Yes 10 times", n:10, icon:"star", v:function(s){return s.yes;}},
+  {t:"Perfect day", d:"Answer Yes for every goal in one day", n:1, icon:"star", v:function(s){return s.perfectDays;}},
+  {t:"Three days running", d:"Keep a goal going 3 days in a row", n:3, icon:"flame", v:function(s){return s.best;}},
+  {t:"One week strong", d:"Keep a goal going 7 days in a row", n:7, icon:"flame", v:function(s){return s.best;}},
+  {t:"Two weeks strong", d:"Keep a goal going 14 days in a row", n:14, icon:"flame", v:function(s){return s.best;}}
 ];
 function stats(){
-  var c = 0; Object.keys(S.checks).forEach(function(k){ c += S.checks[k].length; });
-  return {
-    checks:c,
-    perfectDays:Object.keys(S.days).filter(perfect).length,
-    best:bestStreak(),
-    answers:S.log.length,
-    yes:S.log.filter(function(e){ return e.answer==="Yes"; }).length
-  };
+  var yes = 0, days = {}, gids = {};
+  S.log.forEach(function(e){ if(e.answer === "Yes") yes++; days[ymd(new Date(e.ts))] = 1; gids[e.gid] = 1; });
+  var best = 0; Object.keys(gids).forEach(function(g){ best = Math.max(best, bestStreak(g)); });
+  var maps = S.goals.map(function(g){ return dayMap(g.id); });
+  var perfectDays = S.goals.length ? Object.keys(days).filter(function(d){ return maps.every(function(m){ return m[d] === "Yes"; }); }).length : 0;
+  return {answers:S.log.length, yes:yes, best:best, perfectDays:perfectDays};
 }
 function earnedList(){
   var s = stats();
@@ -295,51 +268,55 @@ function earnedList(){
 
 /* Render */
 function renderGoals(){
+  var full = S.goals.length >= MAX_GOALS;
+  $("form").classList.toggle("hidden", full);
+  $("capnote").classList.toggle("hidden", !full);
   $("goallist").innerHTML = S.goals.length ? S.goals.map(function(g){
-    var on = g.id === S.pin;
-    return '<li><div class="grow">'+esc(g.t)+(on?'<small>Widget asks about this</small>':'')+'</div>' +
-      '<button class="iconbtn'+(on?' on':'')+'" data-pin="'+g.id+'" aria-label="Use as widget goal" aria-pressed="'+on+'"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z"/></svg></button>' +
-      '<button class="iconbtn x" data-del="'+g.id+'" aria-label="Delete goal">&times;</button></li>';
+    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>Daily step: '+esc(g.step)+'</span></div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
   }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
 }
 
+var flashTimer = null;
 function renderWidget(){
   var w = $("widget");
-  var g = S.goals.filter(function(x){ return x.id === S.pin; })[0];
-  if(!g){ w.innerHTML = '<div class="w-thanks"><span class="w-label">Widget</span><p>Add a goal on the Goals tab to start.</p></div>'; return; }
-  var a = answerFor(g.t);
-  if(a){
-    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+a.answer+'</b> for "'+esc(g.t)+'".</p><button class="linkbtn" id="undo" type="button">Undo answer</button></div>';
-  }else{
-    w.innerHTML = '<div><span class="w-label">Today\'s goal</span><p class="w-goal">'+esc(g.t)+'</p></div>' +
+  var pending = S.goals.filter(function(g){ return !todayAns(g.id); });
+  if(flash){
+    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+flash.answer+'</b> for "'+esc(flash.step)+'".</p></div>';
+  }else if(!S.goals.length){
+    w.innerHTML = '<div class="w-thanks"><span class="w-label">Daily check-in</span><p>Add a goal on the Goals tab to start.</p></div>';
+  }else if(pending.length){
+    var g = pending[0];
+    w.innerHTML = '<div><span class="w-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(g.step)+'</p><p class="w-q">Did you do it today?</p></div>' +
       '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
+  }else{
+    w.innerHTML = '<div class="w-thanks"><span class="w-label">All checked in</span><span class="big">Thank you!</span><p>See you tomorrow.</p><button class="linkbtn" id="undo" type="button">Undo last answer</button></div>';
   }
 }
 
 function renderToday(){
   $("datelabel").textContent = new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-  var c = counts(), pct = c.total ? Math.round(c.done / c.total * 100) : 0;
+  var total = S.goals.length, sum = 0, answered = 0;
+  S.goals.forEach(function(g){ var a = todayAns(g.id); if(a){ answered++; sum += score(a); } });
+  var pct = total ? Math.round(sum / total * 100) : 0;
   $("pct").textContent = pct + "%";
-  $("count").textContent = c.done + " of " + c.total + " done";
+  $("count").textContent = total ? answered + " of " + total + " checked in" : "";
   $("fill").style.width = pct + "%";
-  $("bar").classList.toggle("complete", pct === 100);
+  $("bar").classList.toggle("complete", total > 0 && pct === 100);
   $("bar").setAttribute("aria-valuenow", pct);
-  $("msg").textContent = c.total===0 ? "Add your goals on the Goals tab." : pct===100 ? "All goals done today. Nice work." : (c.total - c.done) + " to go.";
-  var st = currentStreak();
-  $("streak").classList.toggle("hidden", st < 1);
-  $("streak").textContent = st + (st===1 ? " day" : " days") + " in a row";
+  $("msg").textContent = !total ? "Add a goal on the Goals tab." :
+    answered < total ? (total - answered) + (total - answered === 1 ? " check-in left today." : " check-ins left today.") :
+    pct === 100 ? "Full day. Nice work." : "All checked in for today.";
 
-  $("todaylist").innerHTML = S.goals.length ? S.goals.map(function(g){
-    var d = isDone(g.id);
-    return '<li class="'+(d?'done':'')+'"><button class="goal" data-chk="'+g.id+'" aria-pressed="'+d+'"><span class="box">'+CHECK+'</span><span>'+esc(g.t)+'</span></button></li>';
-  }).join("") : '<li class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></li>';
+  var days = [];
+  for(var i = 6; i >= 0; i--){ var d = new Date(); d.setDate(d.getDate() - i); days.push({key:ymd(d), l:d.toLocaleDateString(undefined,{weekday:"narrow"}), t:i===0}); }
+  $("goalcards").innerHTML = S.goals.length ? S.goals.map(function(g){
+    var m = dayMap(g.id), a = m[today()], st = streak(g.id);
+    return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+esc(g.step)+'</span></div><span class="pill '+(a||"none")+'">'+(a||"Not yet")+'</span></div>' +
+      '<div class="week" aria-label="Last 7 days">' + days.map(function(x){ return '<div class="'+(x.t?'tod':'')+'"><i class="'+(m[x.key]||"")+'"></i><small>'+x.l+'</small></div>'; }).join("") + '</div>' +
+      '<div class="streakline">'+(st > 0 ? '<b>'+st+(st===1?' day':' days')+'</b> in a row' : 'No streak yet')+'</div></div>';
+  }).join("") : '<div class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></div>';
 
   renderWidget();
-
-  var recent = S.log.slice(-5).reverse();
-  $("log").innerHTML = recent.length ? recent.map(function(e){
-    return '<li><div class="what"><b>'+esc(e.goal)+'</b><small>'+when(e.ts)+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></li>';
-  }).join("") : '<li class="empty">No answers yet. Tap Yes, Partly or No on the widget above.</li>';
 }
 
 function renderAch(){
@@ -360,7 +337,6 @@ function updateDot(){
 }
 
 function render(){
-  recordDay();
   renderGoals(); renderToday(); renderAch(); updateDot();
   save();
 }
@@ -368,42 +344,37 @@ function render(){
 /* Events */
 $("form").addEventListener("submit", function(e){
   e.preventDefault();
-  var v = $("newgoal").value.trim(); if(!v) return;
-  var g = {id:uid(), t:v};
-  S.goals.push(g);
-  if(!S.pin) S.pin = g.id;
-  $("newgoal").value = ""; render();
+  var g = $("newgoal").value.trim(), st = $("newstep").value.trim();
+  if(!g || !st || S.goals.length >= MAX_GOALS) return;
+  S.goals.push({id:uid(), goal:g, step:st});
+  $("newgoal").value = ""; $("newstep").value = ""; render();
 });
 $("goallist").addEventListener("click", function(e){
-  var b = e.target.closest("button"); if(!b) return;
-  if(b.dataset.pin){ S.pin = b.dataset.pin; render(); }
-  else if(b.dataset.del){
-    S.goals = S.goals.filter(function(g){ return g.id !== b.dataset.del; });
-    if(S.pin === b.dataset.del) S.pin = S.goals.length ? S.goals[0].id : null;
-    render();
-  }
+  var b = e.target.closest("button[data-del]"); if(!b) return;
+  S.goals = S.goals.filter(function(g){ return g.id !== b.dataset.del; });
+  render();
 });
-$("todaylist").addEventListener("click", function(e){
-  var b = e.target.closest("button"); if(!b) return;
-  if(b.dataset.go){ setTab(b.dataset.go); return; }
-  if(b.dataset.chk){
-    var t = today(), arr = S.checks[t] || [], i = arr.indexOf(b.dataset.chk);
-    if(i >= 0) arr.splice(i,1); else arr.push(b.dataset.chk);
-    S.checks[t] = arr; render();
-  }
+$("goalcards").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-go]"); if(b) setTab(b.dataset.go);
 });
 $("widget").addEventListener("click", function(e){
   var b = e.target.closest("button"); if(!b) return;
-  var g = S.goals.filter(function(x){ return x.id === S.pin; })[0]; if(!g) return;
   if(b.id === "undo"){
+    var t = today();
     for(var i = S.log.length - 1; i >= 0; i--){
-      if(S.log[i].goal === g.t && ymd(new Date(S.log[i].ts)) === today()){ S.log.splice(i,1); break; }
+      if(ymd(new Date(S.log[i].ts)) === t){ S.log.splice(i,1); break; }
     }
     render(); return;
   }
-  if(b.dataset.a){ S.log.push({goal:g.t, answer:b.dataset.a, ts:Date.now()}); render(); }
+  if(b.dataset.a){
+    var g = S.goals.filter(function(x){ return !todayAns(x.id); })[0]; if(!g) return;
+    S.log.push({gid:g.id, goal:g.goal, step:g.step, answer:b.dataset.a, ts:Date.now()});
+    flash = {answer:b.dataset.a, step:g.step};
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(function(){ flash = null; renderWidget(); }, 1600);
+    render();
+  }
 });
-$("log").addEventListener("click", function(){});
 
 function setTab(name){
   tabNow = name;
