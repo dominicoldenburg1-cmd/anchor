@@ -175,6 +175,16 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .lw-thanks span{font-size:12px;opacity:.85}
 .lw-thanks .linkbtn{color:#fff;font-size:12px;margin-top:2px}
 .home .w{width:100%}
+.carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.carousel::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;display:flex;justify-content:center}
+.slide .w{width:100%}
+.slide .lw{width:100%}
+.stage.lock #widget{width:280px}
+.stage.home #widget{width:100%}
+.dots{display:flex;gap:6px;justify-content:center;margin-top:10px}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.45);display:block}
+.dots i.on{background:#fff}
 .statelist li{padding:12px 14px;justify-content:space-between}
 .statelist .what{display:flex;flex-direction:column;min-width:0}
 .statelist .what b{font:500 15px var(--body);overflow-wrap:anywhere}
@@ -432,45 +442,52 @@ function makePlan(goal, days){
     .catch(function(){ planning = false; showErr("Couldn't reach the plan maker. Check your connection and try again."); render(); });
 }
 
-var flashTimer = null;
+var slideIdx = null, advTimer = null;
+function slideHtml(g, mode){
+  var a = todayAns(g.id), st = stepOf(g);
+  if(mode === "lock"){
+    if(a) return '<div class="slide"><div class="lw"><div class="lw-thanks"><b>Thank you!</b><span>You answered '+a+'</span><button class="linkbtn" data-undo="'+g.id+'" type="button">Undo</button></div></div></div>';
+    return '<div class="slide"><div class="lw"><div><div class="lw-label">'+esc(g.goal)+'</div><p class="lw-step">'+esc(st)+'</p></div>' +
+      '<div class="lw-btns"><button data-a="Yes" data-g="'+g.id+'">Yes</button><button data-a="Partly" data-g="'+g.id+'">Partly</button><button data-a="No" data-g="'+g.id+'">No</button></div></div></div>';
+  }
+  var inner;
+  if(a){
+    inner = '<div class="w-thanks"><span class="w-label">'+esc(g.goal)+'</span><span class="big">Thank you!</span><p>You answered <b>'+a+'</b> for "'+esc(st)+'".</p><button class="linkbtn" data-undo="'+g.id+'" type="button">Undo</button></div>';
+  }else{
+    inner = '<div><span class="w-label">'+esc(g.goal)+'</span><p class="w-goal">'+esc(st)+'</p><p class="w-q">Did you do it today?</p></div>' +
+      '<div class="w-btns"><button class="Yes" data-a="Yes" data-g="'+g.id+'">Yes</button><button class="Partly" data-a="Partly" data-g="'+g.id+'">Partly</button><button class="No" data-a="No" data-g="'+g.id+'">No</button></div>';
+  }
+  return '<div class="slide"><div class="w"><div class="w-in">'+inner+'</div></div></div>';
+}
 function renderWidget(){
   var w = $("widget");
   var mode = S.wsize === "home" ? "home" : "lock";
-  var pending = activeGoals().filter(function(g){ return !todayAns(g.id); });
+  var act = activeGoals();
+  if(slideIdx === null){
+    var first = 0;
+    for(var i = 0; i < act.length; i++){ if(!todayAns(act[i].id)){ first = i; break; } }
+    slideIdx = first;
+  }
+  if(slideIdx > act.length - 1) slideIdx = Math.max(0, act.length - 1);
+
   var html;
-  if(mode === "lock"){
-    if(flash){
-      html = '<div class="lw"><div class="lw-thanks"><b>Thank you!</b><span>You answered '+flash.answer+'</span></div></div>';
-    }else if(!S.goals.length){
-      html = '<div class="lw"><div class="lw-thanks"><span>Add a goal in the app to start</span></div></div>';
-    }else if(pending.length){
-      var g = pending[0];
-      html = '<div class="lw"><div><div class="lw-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left' : '')+'</div><p class="lw-step">'+esc(stepOf(g))+'</p></div>' +
-        '<div class="lw-btns"><button data-a="Yes">Yes</button><button data-a="Partly">Partly</button><button data-a="No">No</button></div></div>';
-    }else{
-      html = '<div class="lw"><div class="lw-thanks"><b>All checked in</b><span>Thank you! See you tomorrow.</span><button class="linkbtn" id="undo" type="button">Undo last answer</button></div></div>';
-    }
+  if(!act.length){
+    html = mode === "lock"
+      ? '<div class="lw"><div class="lw-thanks"><span>' + (S.goals.length ? 'All plans finished' : 'Add a goal in the app to start') + '</span></div></div>'
+      : '<div class="w"><div class="w-in"><div class="w-thanks"><span class="w-label">Daily check-in</span><p>' + (S.goals.length ? 'All plans finished. Nice work.' : 'Add a goal in the app to start.') + '</p></div></div></div>';
   }else{
-    var inner;
-    if(flash){
-      inner = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+flash.answer+'</b> for "'+esc(flash.step)+'".</p></div>';
-    }else if(!S.goals.length){
-      inner = '<div class="w-thanks"><span class="w-label">Daily check-in</span><p>Add a goal in the app to start.</p></div>';
-    }else if(pending.length){
-      var g2 = pending[0];
-      inner = '<div><span class="w-label">'+esc(g2.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(stepOf(g2))+'</p><p class="w-q">Did you do it today?</p></div>' +
-        '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
-    }else{
-      inner = '<div class="w-thanks"><span class="w-label">All checked in</span><span class="big">Thank you!</span><p>See you tomorrow.</p><button class="linkbtn" id="undo" type="button">Undo last answer</button></div>';
-    }
-    html = '<div class="w"><div class="w-in">'+inner+'</div></div>';
+    html = '<div class="carousel" id="car">' + act.map(function(g){ return slideHtml(g, mode); }).join("") + '</div>' +
+      (act.length > 1 ? '<div class="dots">' + act.map(function(g,i){ return '<i class="'+(i===slideIdx?'on':'')+'"></i>'; }).join("") + '</div>' : '');
   }
   w.innerHTML = html;
+  var car = $("car");
+  if(car && car.clientWidth > 0) car.scrollLeft = slideIdx * car.clientWidth;
+
   $("stage").className = "stage " + mode;
   $("lockclock").classList.toggle("hidden", mode !== "lock");
   $("size-lock").setAttribute("aria-selected", mode === "lock");
   $("size-home").setAttribute("aria-selected", mode === "home");
-  $("sizecap").textContent = mode === "lock" ? "Lock screen widgets are about this shape. Shown larger than life size." : "Home screen widget, medium size.";
+  $("sizecap").textContent = (mode === "lock" ? "Lock screen widgets are about this shape. Shown larger than life size." : "Home screen widget, medium size.") + (act.length > 1 ? " Swipe left or right to move between goals." : "");
   var now = new Date();
   $("lockdate").textContent = now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
   $("locktime").textContent = now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M/i,"");
@@ -579,23 +596,37 @@ $("goalcards").addEventListener("click", function(e){
 });
 $("widget").addEventListener("click", function(e){
   var b = e.target.closest("button"); if(!b) return;
-  if(b.id === "undo"){
+  if(b.dataset.undo){
     var t = today();
     for(var i = S.log.length - 1; i >= 0; i--){
-      if(ymd(new Date(S.log[i].ts)) === t){ S.log.splice(i,1); break; }
+      if(S.log[i].gid === b.dataset.undo && ymd(new Date(S.log[i].ts)) === t){ S.log.splice(i,1); break; }
     }
     render(); return;
   }
-  if(b.dataset.a){
-    var g = activeGoals().filter(function(x){ return !todayAns(x.id); })[0]; if(!g) return;
+  if(b.dataset.a && b.dataset.g){
+    var g = activeGoals().filter(function(x){ return x.id === b.dataset.g && !todayAns(x.id); })[0]; if(!g) return;
     S.log.push({gid:g.id, goal:g.goal, step:stepOf(g), answer:b.dataset.a, ts:Date.now()});
-    flash = {answer:b.dataset.a, step:stepOf(g)};
-    clearTimeout(flashTimer);
-    flashTimer = setTimeout(function(){ flash = null; renderWidget(); }, 1600);
     render();
+    clearTimeout(advTimer);
+    advTimer = setTimeout(function(){
+      var act = activeGoals(), car = $("car");
+      if(!car || car.clientWidth === 0) return;
+      for(var k = 1; k <= act.length; k++){
+        var j = (slideIdx + k) % act.length;
+        if(!todayAns(act[j].id)){ car.scrollTo({left:j * car.clientWidth, behavior:"smooth"}); return; }
+      }
+    }, 1200);
   }
 });
-
+$("widget").addEventListener("scroll", function(e){
+  var car = e.target; if(!car || car.id !== "car" || car.clientWidth === 0) return;
+  var i = Math.round(car.scrollLeft / car.clientWidth);
+  if(i !== slideIdx){
+    slideIdx = i;
+    var dots = $("widget").querySelectorAll(".dots i");
+    Array.prototype.forEach.call(dots, function(d, n){ d.classList.toggle("on", n === i); });
+  }
+}, true);
 document.querySelector(".seg").addEventListener("click", function(e){
   var b = e.target.closest("button[data-size]"); if(!b) return;
   S.wsize = b.dataset.size; render();
@@ -603,7 +634,7 @@ document.querySelector(".seg").addEventListener("click", function(e){
 $("resetday").addEventListener("click", function(){
   var t = today();
   S.log = S.log.filter(function(e){ return ymd(new Date(e.ts)) !== t; });
-  flash = null; render();
+  render();
 });
 
 function setTab(name){
