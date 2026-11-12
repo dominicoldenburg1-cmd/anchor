@@ -3,17 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Goal Tracker</title>
+<title>Anchor</title>
 <meta name="theme-color" content="#EEF1F5">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Goals">
+<meta name="apple-mobile-web-app-title" content="Anchor">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
+/* Layout: one phone-sized screen, three bottom tabs (Goals, Today, Achievements). Light theme by choice. */
 :root{
   color-scheme: light;
   --bg:#EEF1F5;
@@ -36,24 +37,32 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);display:flex;
 @media (min-width:600px){
   .phone{height:820px;border-radius:44px;border:10px solid #15202B;box-shadow:0 24px 60px rgba(21,32,43,.25)}
 }
-.top{padding:calc(env(safe-area-inset-top) + 22px) 20px 0}
-.seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px}
-.seg button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
-.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.screen{flex:1;overflow-y:auto;padding:18px 20px calc(env(safe-area-inset-bottom) + 24px)}
+.screen{flex:1;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 26px) 20px 24px}
 .hidden{display:none}
 .eyebrow{font-size:13px;color:var(--muted);margin:0 0 2px}
-h1{font:700 30px/1.1 var(--display);margin:0 0 16px;text-wrap:balance}
-.progress-card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+h1{font:700 30px/1.1 var(--display);margin:0 0 6px;text-wrap:balance}
+.sub{font-size:14px;color:var(--muted);margin:0 0 16px}
+h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px}
+
+/* Bottom tabs */
+.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
+.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 12px var(--body);color:var(--muted);cursor:pointer;border-radius:12px}
+.tabs svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
+.tabs .badge{position:relative}
+.tabs .badge i{position:absolute;top:-2px;right:-6px;width:9px;height:9px;border-radius:50%;background:var(--no);border:2px solid var(--card)}
+
+/* Shared */
+.card{background:var(--card);border-radius:20px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
 .progress-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
 .pct{font:700 40px/1 var(--display);font-variant-numeric:tabular-nums}
 .count{font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
 .bar{height:14px;background:var(--accent-soft);border-radius:99px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .45s cubic-bezier(.3,.8,.3,1)}
 .bar.complete i{background:var(--done)}
+.bar.small{height:8px}
 .msg{font-size:14px;color:var(--muted);margin:12px 0 0}
-h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px}
 ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:4px 6px 4px 4px}
 .goal{flex:1;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;font:500 16px var(--body);color:var(--ink);padding:10px 8px;cursor:pointer;min-height:48px}
@@ -62,30 +71,25 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 li.done .box{background:var(--done);border-color:var(--done)}
 li.done .box svg{opacity:1;transform:scale(1)}
 li.done .goal span{color:var(--muted);text-decoration:line-through}
-.del{border:0;background:none;color:#9AA6B3;font-size:22px;width:40px;height:40px;cursor:pointer;border-radius:10px}
-.add{display:flex;gap:8px;margin-top:12px}
-.add input,.wgoal input{flex:1;font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;width:100%}
+.add{display:flex;gap:8px;margin:0 0 16px}
+.add input{flex:1;font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);min-width:0;width:100%}
 .add button{border:0;background:var(--accent);color:#fff;font:500 15px var(--body);padding:0 18px;border-radius:12px;cursor:pointer}
-.note{font-size:12px;color:var(--muted);margin-top:18px}
-.wgoal label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.empty{font-size:14px;color:var(--muted);background:var(--card);border-radius:14px;padding:14px;display:block}
+.linkbtn{border:0;background:none;color:var(--accent);font:500 14px var(--body);padding:0;cursor:pointer;text-decoration:underline}
 
-/* Answer log */
-.log li{padding:12px 14px;gap:10px;justify-content:space-between}
-.log .what{display:flex;flex-direction:column;min-width:0}
-.log .what b{font:500 15px var(--body);overflow-wrap:anywhere}
-.log .what small{font-size:12px;color:var(--muted)}
-.pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
-.pill.Yes{background:var(--done)}
-.pill.Partly{background:var(--warn)}
-.pill.No{background:var(--no)}
-.empty{font-size:14px;color:var(--muted);background:var(--card);border-radius:14px;padding:14px}
-.tabdot{display:inline-block;min-width:18px;height:18px;line-height:18px;border-radius:99px;background:var(--accent);color:#fff;font-size:11px;font-weight:700;margin-left:6px;padding:0 5px}
+/* Goals tab */
+.grow{flex:1;min-width:0;padding:12px 8px;font:500 16px var(--body);overflow-wrap:anywhere}
+.grow small{display:block;font-size:12px;color:var(--accent);font-weight:700;margin-top:2px}
+.iconbtn{border:0;background:none;width:40px;height:40px;border-radius:10px;cursor:pointer;color:#9AA6B3;display:grid;place-items:center}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn.on{color:var(--warn)}
+.iconbtn.on svg{fill:var(--warn)}
+.iconbtn.x{font-size:24px;line-height:1}
 
-/* Home screen mock */
-.home{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%);margin:-18px -20px 0;padding:24px 20px;min-height:100%;display:flex;flex-direction:column;gap:18px}
-.clock{color:#fff;text-align:center;font:600 54px/1 var(--display);margin-top:6px;text-shadow:0 2px 12px rgba(0,0,0,.15)}
-.clock small{display:block;font:500 15px var(--body);margin-bottom:6px;opacity:.9}
-.w{background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-radius:24px;padding:18px;color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.12);min-height:158px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+/* Today tab */
+.streak{display:inline-block;margin-top:12px;font:700 13px var(--body);color:var(--accent);background:var(--accent-soft);padding:5px 11px;border-radius:99px}
+.w{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%);border-radius:24px;padding:3px}
+.w-in{background:rgba(255,255,255,.95);border-radius:21px;padding:18px;min-height:158px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
 .w-label{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .w-goal{font:700 24px/1.15 var(--display);margin:4px 0 0;text-wrap:balance;overflow-wrap:anywhere}
 .w-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -97,164 +101,323 @@ li.done .goal span{color:var(--muted);text-decoration:line-through}
 .w-thanks{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;flex:1}
 .w-thanks .big{font:700 24px var(--display)}
 .w-thanks p{margin:0;font-size:14px;color:var(--muted)}
-.hint{color:#fff;font-size:12px;text-align:center;opacity:.95;margin:0}
-.reset{align-self:center;border:1px solid rgba(255,255,255,.7);background:rgba(255,255,255,.15);color:#fff;font:500 13px var(--body);padding:8px 14px;border-radius:99px;cursor:pointer}
+.log li{padding:12px 14px;gap:10px;justify-content:space-between}
+.log .what{display:flex;flex-direction:column;min-width:0}
+.log .what b{font:500 15px var(--body);overflow-wrap:anywhere}
+.log .what small{font-size:12px;color:var(--muted)}
+.pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
+.pill.Yes{background:var(--done)}
+.pill.Partly{background:var(--warn)}
+.pill.No{background:var(--no)}
+.cap{font-size:12px;color:var(--muted);margin:8px 2px 0}
+
+/* Achievements tab */
+.ach li{padding:14px;align-items:flex-start}
+.medal{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#E6EAEF;color:#9AA6B3}
+.medal svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ach li.earned .medal{background:var(--done);color:#fff}
+.ach .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.ach .txt b{font:700 16px var(--body)}
+.ach .txt span{font-size:13px;color:var(--muted)}
+.ach .txt .bar{margin-top:8px}
+.ach .txt em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
+.ach li.earned .txt em{color:var(--done);font-weight:700}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <div class="phone">
-  <div class="top">
-    <div class="seg" role="tablist">
-      <button role="tab" id="tab-app" aria-selected="true">App<span class="tabdot hidden" id="tabdot">0</span></button>
-      <button role="tab" id="tab-home" aria-selected="false">Widget</button>
-    </div>
-  </div>
 
-  <main class="screen" id="screen-app">
-    <p class="eyebrow">Today</p>
-    <h1>My goals</h1>
-    <section class="progress-card" aria-label="Progress">
+  <main class="screen hidden" id="screen-goals">
+    <p class="eyebrow">Everything you want to do each day</p>
+    <h1>Goals</h1>
+    <p class="sub">Add as many as you like. Tap the star to choose the one the widget asks about.</p>
+    <form class="add" id="form">
+      <input id="newgoal" type="text" maxlength="60" placeholder="Add a goal, like Read 20 pages" autocomplete="off" aria-label="New goal">
+      <button type="submit">Add</button>
+    </form>
+    <ul id="goallist"></ul>
+  </main>
+
+  <main class="screen" id="screen-today">
+    <p class="eyebrow" id="datelabel"></p>
+    <h1>Today</h1>
+    <section class="card" aria-label="Progress">
       <div class="progress-head">
         <span class="pct" id="pct">0%</span>
         <span class="count" id="count">0 of 0 done</span>
       </div>
       <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="fill"></i></div>
       <p class="msg" id="msg"></p>
+      <span class="streak hidden" id="streak"></span>
     </section>
+
     <h2>Checklist</h2>
-    <ul id="list"></ul>
-    <form class="add" id="form">
-      <input id="newgoal" type="text" placeholder="Add a goal" autocomplete="off" aria-label="New goal">
-      <button type="submit">Add</button>
-    </form>
+    <ul id="todaylist"></ul>
 
-    <h2>Widget goal</h2>
-    <div class="wgoal">
-      <label for="wgoal">What the widget asks you each day</label>
-      <input id="wgoal" type="text" maxlength="60" autocomplete="off">
-    </div>
+    <h2>Widget check-in</h2>
+    <div class="w"><div class="w-in" id="widget"></div></div>
+    <p class="cap">This is how the home-screen widget will look and work.</p>
 
-    <h2>Widget answers</h2>
+    <h2>Recent answers</h2>
     <ul class="log" id="log"></ul>
-    <p class="note">Sample goals for the prototype. Tell me your real ones and what to change.</p>
   </main>
 
-  <main class="screen hidden" id="screen-home">
-    <div class="home">
-      <div class="clock"><small id="datelabel"></small><span id="timelabel"></span></div>
-      <div class="w" id="widget" aria-label="Goal widget"></div>
-      <p class="hint">Tap an answer. It gets logged in the App tab.</p>
-      <button class="reset" id="reset" type="button">Reset widget to test again</button>
-    </div>
+  <main class="screen hidden" id="screen-ach">
+    <p class="eyebrow" id="achsum"></p>
+    <h1>Achievements</h1>
+    <p class="sub">Earned by checking off goals and answering the widget.</p>
+    <ul class="ach" id="achlist"></ul>
   </main>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-goals" aria-selected="false" data-tab="goals">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>Goals
+    </button>
+    <button role="tab" id="tab-today" aria-selected="true" data-tab="today">
+      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Today
+    </button>
+    <button role="tab" id="tab-ach" aria-selected="false" data-tab="ach">
+      <span class="badge"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><i class="hidden" id="achdot"></i></span>Achievements
+    </button>
+  </nav>
 </div>
 
 <script>
-var goals = [
-  {t:"Write the one-line pitch", d:true},
-  {t:"Talk to 5 possible customers", d:false},
-  {t:"Sketch the first screen", d:false},
-  {t:"Pick a name", d:false},
-  {t:"Practice the 2-minute demo", d:false}
-];
-var widgetGoal = "Read 20 pages";
-var log = [];      // {goal, answer, ts}
-var answered = null; // answer shown on widget now, or null
-var unseen = 0;
+var KEY = "anchor-v3";
+var S = {goals:[], checks:{}, days:{}, log:[], pin:null, seenAch:[]};
+var tabNow = "today";
 
-try{
-  var s = JSON.parse(localStorage.getItem("goals-proto2"));
-  if(s){
-    if(Array.isArray(s.goals) && s.goals.length) goals = s.goals;
-    if(typeof s.widgetGoal === "string" && s.widgetGoal) widgetGoal = s.widgetGoal;
-    if(Array.isArray(s.log)) log = s.log;
-    if(s.answered) answered = s.answered;
+function uid(){ return "g" + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+function ymd(d){ return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+function today(){ return ymd(new Date()); }
+function dayNum(s){ var p = s.split("-"); return Date.UTC(+p[0], +p[1]-1, +p[2]) / 86400000; }
+
+(function load(){
+  var loaded = false;
+  try{
+    var s = JSON.parse(localStorage.getItem(KEY));
+    if(s && Array.isArray(s.goals)){ S = Object.assign(S, s); loaded = true; }
+  }catch(e){}
+  if(!loaded){
+    // bring over goals and answers from the earlier version if present
+    try{
+      var o = JSON.parse(localStorage.getItem("goals-proto2"));
+      if(o && Array.isArray(o.goals) && o.goals.length){
+        var ids = [];
+        S.goals = o.goals.map(function(g){ var id = uid(); if(g.d) ids.push(id); return {id:id, t:g.t}; });
+        S.checks[today()] = ids;
+        if(Array.isArray(o.log)) S.log = o.log;
+        loaded = true;
+      }
+    }catch(e){}
   }
-}catch(e){}
-function save(){ try{ localStorage.setItem("goals-proto2", JSON.stringify({goals:goals,widgetGoal:widgetGoal,log:log,answered:answered})); }catch(e){} }
-var $ = function(id){ return document.getElementById(id); };
-var check = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
-function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+  if(!loaded){
+    S.goals = ["Read 20 pages","Talk to 5 possible customers","Sketch the first screen","Pick a name","Practice the 2-minute demo"].map(function(t){ return {id:uid(), t:t}; });
+  }
+  if(!S.pin || !S.goals.some(function(g){ return g.id===S.pin; })) S.pin = S.goals.length ? S.goals[0].id : null;
+})();
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){} }
 
-function clock(){
-  var n = new Date();
-  $("datelabel").textContent = n.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
-  $("timelabel").textContent = n.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M/i,"");
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.innerHTML; }
+var CHECK = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+
+function doneIds(){ return S.checks[today()] || []; }
+function isDone(id){ return doneIds().indexOf(id) >= 0; }
+function counts(){
+  var done = S.goals.filter(function(g){ return isDone(g.id); }).length;
+  return {done:done, total:S.goals.length};
+}
+function recordDay(){
+  var c = counts();
+  if(c.total > 0 || S.days[today()]) S.days[today()] = c;
+}
+function perfect(date){ var d = S.days[date]; return !!(d && d.total > 0 && d.done >= d.total); }
+function currentStreak(){
+  var n = dayNum(today());
+  if(!perfect(today())) n -= 1;
+  var c = 0;
+  while(true){
+    var dt = new Date(n * 86400000);
+    var key = dt.getUTCFullYear() + "-" + String(dt.getUTCMonth()+1).padStart(2,"0") + "-" + String(dt.getUTCDate()).padStart(2,"0");
+    if(perfect(key)){ c++; n -= 1; } else break;
+  }
+  return c;
+}
+function bestStreak(){
+  var ds = Object.keys(S.days).filter(perfect).map(dayNum).sort(function(a,b){return a-b;});
+  var best = 0, run = 0, prev = null;
+  ds.forEach(function(d){ run = (prev !== null && d === prev + 1) ? run + 1 : 1; if(run > best) best = run; prev = d; });
+  return best;
+}
+function answerFor(text){
+  var t = today(), found = null;
+  S.log.forEach(function(e){ if(e.goal === text && ymd(new Date(e.ts)) === t) found = e; });
+  return found;
 }
 function when(ts){
   var d = new Date(ts);
   return d.toLocaleDateString(undefined,{weekday:"short",month:"short",day:"numeric"}) + ", " + d.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"});
 }
 
+/* Achievements */
+var ICON = {
+  step:'<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  star:'<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z"/></svg>',
+  flame:'<svg viewBox="0 0 24 24"><path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5.3 1.5 1 2.2 2 2.5C11 9 11 6 12 3z"/></svg>',
+  chat:'<svg viewBox="0 0 24 24"><path d="M5 5h14v10H10l-5 4V5z"/></svg>'
+};
+var ACH = [
+  {t:"First step", d:"Check off a goal", n:1, icon:"step", v:function(s){return s.checks;}},
+  {t:"Getting going", d:"Check off 10 goals", n:10, icon:"step", v:function(s){return s.checks;}},
+  {t:"On a roll", d:"Check off 50 goals", n:50, icon:"step", v:function(s){return s.checks;}},
+  {t:"Perfect day", d:"Finish every goal in one day", n:1, icon:"star", v:function(s){return s.perfectDays;}},
+  {t:"Three in a row", d:"Perfect days 3 days running", n:3, icon:"flame", v:function(s){return s.best;}},
+  {t:"One week strong", d:"Perfect days 7 days running", n:7, icon:"flame", v:function(s){return s.best;}},
+  {t:"Checked in", d:"Answer the widget once", n:1, icon:"chat", v:function(s){return s.answers;}},
+  {t:"Showing up", d:"Answer Yes on the widget 5 times", n:5, icon:"chat", v:function(s){return s.yes;}}
+];
+function stats(){
+  var c = 0; Object.keys(S.checks).forEach(function(k){ c += S.checks[k].length; });
+  return {
+    checks:c,
+    perfectDays:Object.keys(S.days).filter(perfect).length,
+    best:bestStreak(),
+    answers:S.log.length,
+    yes:S.log.filter(function(e){ return e.answer==="Yes"; }).length
+  };
+}
+function earnedList(){
+  var s = stats();
+  return ACH.map(function(a){ var v = a.v(s); return {a:a, v:Math.min(v, a.n), earned:v >= a.n}; });
+}
+
+/* Render */
+function renderGoals(){
+  $("goallist").innerHTML = S.goals.length ? S.goals.map(function(g){
+    var on = g.id === S.pin;
+    return '<li><div class="grow">'+esc(g.t)+(on?'<small>Widget asks about this</small>':'')+'</div>' +
+      '<button class="iconbtn'+(on?' on':'')+'" data-pin="'+g.id+'" aria-label="Use as widget goal" aria-pressed="'+on+'"><svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9 6.8 19.7l1-5.9L3.5 9.7l5.9-.8L12 3.5z"/></svg></button>' +
+      '<button class="iconbtn x" data-del="'+g.id+'" aria-label="Delete goal">&times;</button></li>';
+  }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
+}
+
 function renderWidget(){
   var w = $("widget");
-  if(answered){
-    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+answered+'</b> for "'+esc(widgetGoal)+'".</p></div>';
+  var g = S.goals.filter(function(x){ return x.id === S.pin; })[0];
+  if(!g){ w.innerHTML = '<div class="w-thanks"><span class="w-label">Widget</span><p>Add a goal on the Goals tab to start.</p></div>'; return; }
+  var a = answerFor(g.t);
+  if(a){
+    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+a.answer+'</b> for "'+esc(g.t)+'".</p><button class="linkbtn" id="undo" type="button">Undo answer</button></div>';
   }else{
-    w.innerHTML = '<div><span class="w-label">Today\'s goal</span><p class="w-goal">'+esc(widgetGoal)+'</p></div>' +
+    w.innerHTML = '<div><span class="w-label">Today\'s goal</span><p class="w-goal">'+esc(g.t)+'</p></div>' +
       '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
   }
 }
 
-function render(){
-  var done = goals.filter(function(g){return g.d;}).length, total = goals.length;
-  var pct = total ? Math.round(done/total*100) : 0;
+function renderToday(){
+  $("datelabel").textContent = new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  var c = counts(), pct = c.total ? Math.round(c.done / c.total * 100) : 0;
   $("pct").textContent = pct + "%";
-  $("count").textContent = done + " of " + total + " done";
+  $("count").textContent = c.done + " of " + c.total + " done";
   $("fill").style.width = pct + "%";
-  $("bar").classList.toggle("complete", pct===100);
+  $("bar").classList.toggle("complete", pct === 100);
   $("bar").setAttribute("aria-valuenow", pct);
-  $("msg").textContent = total===0 ? "Add your first goal below." : pct===100 ? "All goals done. Nice work." : (total-done) + " to go.";
+  $("msg").textContent = c.total===0 ? "Add your goals on the Goals tab." : pct===100 ? "All goals done today. Nice work." : (c.total - c.done) + " to go.";
+  var st = currentStreak();
+  $("streak").classList.toggle("hidden", st < 1);
+  $("streak").textContent = st + (st===1 ? " day" : " days") + " in a row";
 
-  $("list").innerHTML = goals.map(function(g,i){
-    return '<li class="'+(g.d?'done':'')+'"><button class="goal" data-i="'+i+'" aria-pressed="'+g.d+'"><span class="box">'+check+'</span><span>'+esc(g.t)+'</span></button><button class="del" data-del="'+i+'" aria-label="Delete goal">&times;</button></li>';
-  }).join("");
+  $("todaylist").innerHTML = S.goals.length ? S.goals.map(function(g){
+    var d = isDone(g.id);
+    return '<li class="'+(d?'done':'')+'"><button class="goal" data-chk="'+g.id+'" aria-pressed="'+d+'"><span class="box">'+CHECK+'</span><span>'+esc(g.t)+'</span></button></li>';
+  }).join("") : '<li class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></li>';
 
-  $("log").innerHTML = log.length ? log.slice().reverse().map(function(e){
-    return '<li><div class="what"><b>'+esc(e.goal)+'</b><small>'+when(e.ts)+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></li>';
-  }).join("") : '<li class="empty" style="display:block">No answers yet. Answer from the Widget tab and it shows up here.</li>';
-
-  var dot = $("tabdot");
-  dot.textContent = unseen; dot.classList.toggle("hidden", unseen===0);
   renderWidget();
+
+  var recent = S.log.slice(-5).reverse();
+  $("log").innerHTML = recent.length ? recent.map(function(e){
+    return '<li><div class="what"><b>'+esc(e.goal)+'</b><small>'+when(e.ts)+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></li>';
+  }).join("") : '<li class="empty">No answers yet. Tap Yes, Partly or No on the widget above.</li>';
+}
+
+function renderAch(){
+  var list = earnedList(), n = list.filter(function(x){ return x.earned; }).length;
+  $("achsum").textContent = n + " of " + list.length + " earned";
+  $("achlist").innerHTML = list.map(function(x){
+    var pct = Math.round(x.v / x.a.n * 100);
+    return '<li class="'+(x.earned?'earned':'')+'"><span class="medal">'+ICON[x.a.icon]+'</span><div class="txt"><b>'+x.a.t+'</b><span>'+x.a.d+'</span>' +
+      (x.earned ? '<em>Earned</em>' : '<div class="bar small"><i style="width:'+pct+'%"></i></div><em>'+x.v+' of '+x.a.n+'</em>') + '</div></li>';
+  }).join("");
+}
+
+function updateDot(){
+  var earned = earnedList().filter(function(x){ return x.earned; }).map(function(x){ return x.a.t; });
+  var fresh = earned.filter(function(t){ return S.seenAch.indexOf(t) < 0; });
+  if(tabNow === "ach"){ S.seenAch = earned; fresh = []; }
+  $("achdot").classList.toggle("hidden", fresh.length === 0);
+}
+
+function render(){
+  recordDay();
+  renderGoals(); renderToday(); renderAch(); updateDot();
   save();
 }
 
-$("list").addEventListener("click", function(e){
-  var t = e.target.closest("button"); if(!t) return;
-  if(t.dataset.del !== undefined){ goals.splice(+t.dataset.del,1); render(); }
-  else if(t.dataset.i !== undefined){ goals[+t.dataset.i].d = !goals[+t.dataset.i].d; render(); }
-});
+/* Events */
 $("form").addEventListener("submit", function(e){
   e.preventDefault();
   var v = $("newgoal").value.trim(); if(!v) return;
-  goals.push({t:v,d:false}); $("newgoal").value=""; render();
+  var g = {id:uid(), t:v};
+  S.goals.push(g);
+  if(!S.pin) S.pin = g.id;
+  $("newgoal").value = ""; render();
 });
-$("wgoal").value = widgetGoal;
-$("wgoal").addEventListener("input", function(){
-  widgetGoal = this.value.trim() || "Read 20 pages";
-  answered = null; renderWidget(); save();
+$("goallist").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.pin){ S.pin = b.dataset.pin; render(); }
+  else if(b.dataset.del){
+    S.goals = S.goals.filter(function(g){ return g.id !== b.dataset.del; });
+    if(S.pin === b.dataset.del) S.pin = S.goals.length ? S.goals[0].id : null;
+    render();
+  }
+});
+$("todaylist").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  if(b.dataset.go){ setTab(b.dataset.go); return; }
+  if(b.dataset.chk){
+    var t = today(), arr = S.checks[t] || [], i = arr.indexOf(b.dataset.chk);
+    if(i >= 0) arr.splice(i,1); else arr.push(b.dataset.chk);
+    S.checks[t] = arr; render();
+  }
 });
 $("widget").addEventListener("click", function(e){
-  var b = e.target.closest("button[data-a]"); if(!b) return;
-  answered = b.dataset.a;
-  log.push({goal:widgetGoal, answer:answered, ts:Date.now()});
-  unseen++; render();
+  var b = e.target.closest("button"); if(!b) return;
+  var g = S.goals.filter(function(x){ return x.id === S.pin; })[0]; if(!g) return;
+  if(b.id === "undo"){
+    for(var i = S.log.length - 1; i >= 0; i--){
+      if(S.log[i].goal === g.t && ymd(new Date(S.log[i].ts)) === today()){ S.log.splice(i,1); break; }
+    }
+    render(); return;
+  }
+  if(b.dataset.a){ S.log.push({goal:g.t, answer:b.dataset.a, ts:Date.now()}); render(); }
 });
-$("reset").onclick = function(){ answered = null; render(); };
+$("log").addEventListener("click", function(){});
 
-function tab(which){
-  var app = which==="app";
-  $("screen-app").classList.toggle("hidden", !app);
-  $("screen-home").classList.toggle("hidden", app);
-  $("tab-app").setAttribute("aria-selected", app);
-  $("tab-home").setAttribute("aria-selected", !app);
-  if(app){ unseen = 0; render(); }
+function setTab(name){
+  tabNow = name;
+  ["goals","today","ach"].forEach(function(n){
+    $("screen-"+n).classList.toggle("hidden", n !== name);
+    $("tab-"+n).setAttribute("aria-selected", n === name);
+  });
+  render();
 }
-$("tab-app").onclick = function(){ tab("app"); };
-$("tab-home").onclick = function(){ tab("home"); };
-clock(); setInterval(clock, 30000);
+document.querySelector(".tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-tab]"); if(b) setTab(b.dataset.tab);
+});
+document.addEventListener("visibilitychange", function(){ if(!document.hidden) render(); });
+
 render();
 if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(function(){}); }
 </script>
