@@ -131,6 +131,26 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .addbtn{width:100%;border:0;background:var(--accent);color:#fff;font:700 17px var(--body);border-radius:14px;padding:14px 16px;min-height:72px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .addbtn span{font-size:26px;line-height:1;font-weight:500}
 .addbtn:active{transform:scale(.99)}
+.vlink{display:block;margin-top:8px;text-align:left}
+/* Video recorder */
+.vid{position:absolute;inset:0;z-index:30;background:#0F1720;color:#fff;display:flex;flex-direction:column;gap:12px;padding:calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px);overflow-y:auto}
+.vid-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.vid-top b{font:700 18px var(--body);overflow-wrap:anywhere}
+.vid-x{border:0;background:rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:50%;font-size:24px;line-height:1;cursor:pointer;flex:none}
+.vid-stage{position:relative;border-radius:18px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:44vh;width:100%;display:flex;justify-content:center}
+.vid-stage video{height:100%;width:100%;object-fit:cover;background:#000}
+.vid-stage video.mirror{transform:scaleX(-1)}
+.vid-timer{position:absolute;top:10px;left:10px;background:rgba(200,73,63,.95);color:#fff;font:700 13px var(--body);padding:5px 10px;border-radius:99px;font-variant-numeric:tabular-nums}
+.vid-bar{height:6px;background:rgba(255,255,255,.22);border-radius:99px;overflow:hidden}
+.vid-bar i{display:block;height:100%;width:0;background:#E5584D}
+.vid-prompts{margin:0;padding:0 0 0 20px;font-size:15px;line-height:1.45;display:flex;flex-direction:column;gap:4px;color:rgba(255,255,255,.92)}
+.vid-note{font-size:13px;color:rgba(255,255,255,.7);margin:0}
+.vid-msg{font-size:14px;color:#FFB4AE;margin:0}
+.vid-actions{display:flex;gap:10px;margin-top:auto}
+.vid-actions button{flex:1;border:0;border-radius:14px;padding:15px 8px;font:700 16px var(--body);cursor:pointer;background:rgba(255,255,255,.16);color:#fff}
+.vid-actions button.rec{background:#E5584D}
+.vid-actions button.primary{background:var(--accent)}
+.vid-actions button.danger{color:#FFB4AE}
 /* Plan maker */
 .daysel{display:flex;gap:6px;margin-bottom:8px}
 .daysel button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px var(--body);padding:11px 0;border-radius:12px;cursor:pointer}
@@ -295,6 +315,22 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
       <svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="3"/><path d="M7.5 12h9"/></svg>Widget
     </button>
   </nav>
+
+  <div class="vid hidden" id="vid" role="dialog" aria-modal="true" aria-labelledby="vidtitle">
+    <div class="vid-top"><b id="vidtitle"></b><button type="button" class="vid-x" id="vidclose" aria-label="Close">&times;</button></div>
+    <div class="vid-stage"><video id="vidview" playsinline muted></video><span class="vid-timer hidden" id="vidtimer">0:00 / 1:00</span></div>
+    <div class="vid-bar hidden" id="vidbar"><i id="vidfill"></i></div>
+    <p class="vid-note" id="vidnote"></p>
+    <ol class="vid-prompts" id="vidprompts">
+      <li>What is your goal?</li>
+      <li>Why are you doing it?</li>
+      <li>What do you hope to gain?</li>
+      <li>What will happen if you don't achieve it?</li>
+    </ol>
+    <p class="vid-msg hidden" id="vidmsg" role="alert"></p>
+    <div class="vid-actions" id="vidactions"></div>
+    <input type="file" accept="video/*" capture="user" id="vidfile" class="hidden">
+  </div>
 </div>
 
 <script>
@@ -420,7 +456,8 @@ function renderGoals(){
     var det = hasPlan ? '<details><summary>See the full plan</summary><ol class="plan">' + g.plan.map(function(s,i){
       return '<li class="'+(i === dayIndex(g) ? 'now' : '')+'">Day '+(i+1)+': '+esc(s)+'</li>';
     }).join("") + '</ol></details>' : '';
-    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>'+meta+'</span>'+det+'</div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
+    var vb = '<button type="button" class="linkbtn vlink" data-vid="'+g.id+'" data-m="'+(g.video ? 'watch' : 'rec')+'">'+(g.video ? 'Watch your why video' : 'Record your why video')+'</button>';
+    return '<li><div class="grow"><b>'+esc(g.goal)+'</b><span>'+meta+'</span>'+vb+det+'</div><button class="iconbtn" data-del="'+g.id+'" aria-label="Delete goal '+esc(g.goal)+'">&times;</button></li>';
   }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
 }
 
@@ -521,7 +558,7 @@ function renderToday(){
     var line = cur ? (dayLabel(g) ? dayLabel(g) + ': ' : '') + esc(cur) : 'Plan finished. Nice work.';
     return '<div class="gcard"><div class="ghead"><div><b>'+esc(g.goal)+'</b><span class="step">'+line+'</span></div><span class="pill '+(a||"none")+'">'+(a||(cur ? "Not yet" : "Done"))+'</span></div>' +
       '<div class="week" aria-label="Last 7 days">' + days.map(function(x){ return '<div class="'+(x.t?'tod':'')+'"><i class="'+(m[x.key]||"")+'"></i><small>'+x.l+'</small></div>'; }).join("") + '</div>' +
-      '<div class="streakline">'+(st > 0 ? '<b>'+st+(st===1?' day':' days')+'</b> in a row' : 'No streak yet')+'</div></div>';
+      '<div class="streakline">'+(st > 0 ? '<b>'+st+(st===1?' day':' days')+'</b> in a row' : 'No streak yet')+(g.video ? ' &middot; <button class="linkbtn" data-vid="'+g.id+'" data-m="watch" type="button">Watch your why</button>' : '')+'</div></div>';
   }).join("") : '<div class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></div>';
 
   renderWidget();
@@ -556,8 +593,10 @@ $("form").addEventListener("submit", function(e){
   if(!g || S.goals.length >= MAX_GOALS || planning) return;
   if(manual){
     var st = $("newstep").value.trim(); if(!st) return;
-    S.goals.push({id:uid(), goal:g, step:st});
+    var ng = {id:uid(), goal:g, step:st};
+    S.goals.push(ng);
     $("newgoal").value = ""; $("newstep").value = ""; showErr(""); adding = false; render();
+    openVideo(ng.id, "rec");
   }else{
     makePlan(g, planDays);
   }
@@ -576,8 +615,10 @@ $("draft").addEventListener("click", function(e){
   if(b.dataset.act === "redo"){ draft = null; render(); return; }
   if(b.dataset.act === "save"){
     var steps = draft.steps.map(function(s){ return String(s).trim() || ("Work on: " + draft.goal); });
-    S.goals.push({id:uid(), goal:draft.goal, plan:steps, start:today()});
+    var ng2 = {id:uid(), goal:draft.goal, plan:steps, start:today()};
+    S.goals.push(ng2);
     draft = null; $("newgoal").value = ""; adding = false; render();
+    openVideo(ng2.id, "rec");
   }
 });
 $("addbtn").addEventListener("click", function(){
@@ -587,11 +628,16 @@ $("canceladd").addEventListener("click", function(){
   adding = false; draft = null; manual = false; showErr(""); $("newgoal").value = ""; $("newstep").value = ""; render();
 });
 $("goallist").addEventListener("click", function(e){
+  var v = e.target.closest("button[data-vid]");
+  if(v){ openVideo(v.dataset.vid, v.dataset.m); return; }
   var b = e.target.closest("button[data-del]"); if(!b) return;
   S.goals = S.goals.filter(function(g){ return g.id !== b.dataset.del; });
+  vdel(b.dataset.del).catch(function(){});
   render();
 });
 $("goalcards").addEventListener("click", function(e){
+  var v = e.target.closest("button[data-vid]");
+  if(v){ openVideo(v.dataset.vid, v.dataset.m); return; }
   var b = e.target.closest("button[data-go]"); if(b) setTab(b.dataset.go);
 });
 $("widget").addEventListener("click", function(e){
@@ -636,6 +682,155 @@ $("resetday").addEventListener("click", function(){
   S.log = S.log.filter(function(e){ return ymd(new Date(e.ts)) !== t; });
   render();
 });
+
+/* Why videos: recorded on this phone, kept in IndexedDB (too big for localStorage) */
+function vdb(){ return new Promise(function(res, rej){
+  var r = indexedDB.open("anchor-videos", 1);
+  r.onupgradeneeded = function(){ r.result.createObjectStore("v"); };
+  r.onsuccess = function(){ res(r.result); };
+  r.onerror = function(){ rej(r.error); };
+}); }
+function vput(id, blob){ return vdb().then(function(d){ return new Promise(function(res, rej){
+  var t = d.transaction("v", "readwrite"); t.objectStore("v").put(blob, id);
+  t.oncomplete = function(){ res(); }; t.onerror = function(){ rej(t.error); };
+}); }); }
+function vget(id){ return vdb().then(function(d){ return new Promise(function(res, rej){
+  var q = d.transaction("v", "readonly").objectStore("v").get(id);
+  q.onsuccess = function(){ res(q.result || null); }; q.onerror = function(){ rej(q.error); };
+}); }); }
+function vdel(id){ return vdb().then(function(d){ return new Promise(function(res, rej){
+  var t = d.transaction("v", "readwrite"); t.objectStore("v").delete(id);
+  t.oncomplete = function(){ res(); }; t.onerror = function(){ rej(t.error); };
+}); }); }
+
+var V = {gid:null, state:"", stream:null, rec:null, chunks:[], blob:null, url:null, t0:0, timer:null};
+var MAXSEC = 60;
+
+function vmsg(t){ $("vidmsg").textContent = t || ""; $("vidmsg").classList.toggle("hidden", !t); }
+function stopStream(){ if(V.stream){ V.stream.getTracks().forEach(function(t){ t.stop(); }); V.stream = null; } }
+function clearUrl(){ if(V.url){ URL.revokeObjectURL(V.url); V.url = null; } }
+function fmt(s){ s = Math.floor(s); return Math.floor(s/60) + ":" + String(s%60).padStart(2,"0"); }
+
+function vState(st){
+  V.state = st;
+  var live = st === "ready" || st === "rec", play = st === "review" || st === "watch";
+  var v = $("vidview");
+  v.classList.toggle("mirror", live);
+  v.controls = play; v.muted = live;
+  $("vidprompts").classList.toggle("hidden", play);
+  $("vidtimer").classList.toggle("hidden", st !== "rec");
+  $("vidbar").classList.toggle("hidden", st !== "rec");
+  var note = {
+    ready:"Record up to 1 minute. Answer these out loud:",
+    rec:"Recording. Answer these out loud:",
+    review:"Watch it back, then save it or record again.",
+    watch:"Your why. Come back to this whenever you need it.",
+    nocam:"The camera isn't available. Answer these out loud:"
+  }[st] || "";
+  $("vidnote").textContent = note;
+  var a = "";
+  if(st === "ready") a = '<button data-v="skip" type="button">Skip for now</button><button class="rec" data-v="rec" type="button">Record</button>';
+  else if(st === "rec") a = '<button class="rec" data-v="stop" type="button">Stop</button>';
+  else if(st === "review") a = '<button data-v="retake" type="button">Retake</button><button class="primary" data-v="save" type="button">Save</button>';
+  else if(st === "watch") a = '<button class="danger" data-v="del" type="button">Delete</button><button data-v="retake" type="button">Re-record</button>';
+  else if(st === "nocam") a = '<button data-v="skip" type="button">Skip for now</button><button data-v="retry" type="button">Try again</button><button class="primary" data-v="file" type="button">Use camera app</button>';
+  $("vidactions").innerHTML = a;
+}
+
+function startCamera(){
+  stopStream(); clearUrl(); vmsg("");
+  var v = $("vidview"); v.pause(); v.removeAttribute("src"); v.srcObject = null;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){ vmsg("This browser can't record here. Use your camera app instead."); vState("nocam"); return; }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:"user"}, audio:true}).then(function(s){
+    V.stream = s; v.srcObject = s; v.muted = true;
+    var p = v.play(); if(p && p.catch) p.catch(function(){});
+    vState("ready");
+  }).catch(function(){ vmsg("Couldn't open the camera. Allow camera and microphone access for this app, or use your camera app."); vState("nocam"); });
+}
+
+function openVideo(gid, mode){
+  var g = S.goals.filter(function(x){ return x.id === gid; })[0]; if(!g) return;
+  V.gid = gid; V.blob = null;
+  $("vidtitle").textContent = g.goal;
+  $("vid").classList.remove("hidden");
+  if(mode === "watch"){
+    vmsg("");
+    vget(gid).then(function(blob){
+      if(!blob){ vmsg("Couldn't find the video on this phone. Record it again."); startCamera(); return; }
+      V.blob = blob; showBlob("watch");
+    }).catch(function(){ vmsg("Couldn't open the video."); startCamera(); });
+  }else{
+    startCamera();
+  }
+}
+function showBlob(st){
+  stopStream(); clearUrl();
+  V.url = URL.createObjectURL(V.blob);
+  var v = $("vidview"); v.srcObject = null; v.src = V.url; v.muted = false;
+  vState(st);
+}
+function closeVideo(){
+  clearInterval(V.timer);
+  if(V.rec && V.rec.state !== "inactive"){ V.rec.onstop = null; try{ V.rec.stop(); }catch(e){} }
+  stopStream(); clearUrl();
+  var v = $("vidview"); v.pause(); v.removeAttribute("src"); v.srcObject = null;
+  $("vid").classList.add("hidden"); V.gid = null; V.blob = null; V.rec = null; vmsg("");
+}
+function startRec(){
+  vmsg("");
+  var types = ["video/mp4", "video/webm;codecs=vp9,opus", "video/webm"];
+  var mt = types.filter(function(t){ return MediaRecorder.isTypeSupported(t); })[0];
+  try{ V.rec = mt ? new MediaRecorder(V.stream, {mimeType:mt}) : new MediaRecorder(V.stream); }
+  catch(e){ vmsg("Recording isn't supported here. Use your camera app instead."); vState("nocam"); return; }
+  V.chunks = [];
+  V.rec.ondataavailable = function(e){ if(e.data && e.data.size) V.chunks.push(e.data); };
+  V.rec.onstop = function(){
+    clearInterval(V.timer);
+    V.blob = new Blob(V.chunks, {type:(V.rec && V.rec.mimeType) || mt || "video/mp4"});
+    showBlob("review");
+  };
+  V.rec.start();
+  V.t0 = Date.now();
+  V.timer = setInterval(function(){
+    var el = (Date.now() - V.t0) / 1000;
+    $("vidtimer").textContent = fmt(el) + " / 1:00";
+    $("vidfill").style.width = Math.min(100, el / MAXSEC * 100) + "%";
+    if(el >= MAXSEC) stopRec();
+  }, 200);
+  $("vidfill").style.width = "0%";
+  vState("rec");
+}
+function stopRec(){ if(V.rec && V.rec.state !== "inactive") V.rec.stop(); }
+
+$("vidactions").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-v]"); if(!b) return;
+  var a = b.dataset.v;
+  if(a === "skip") closeVideo();
+  else if(a === "rec") startRec();
+  else if(a === "stop") stopRec();
+  else if(a === "retake" || a === "retry") startCamera();
+  else if(a === "file") $("vidfile").click();
+  else if(a === "save"){
+    var gid = V.gid, blob = V.blob; if(!gid || !blob) return;
+    vput(gid, blob).then(function(){
+      var g = S.goals.filter(function(x){ return x.id === gid; })[0]; if(g) g.video = true;
+      closeVideo(); render();
+    }).catch(function(){ vmsg("Couldn't save the video on this phone. Try again."); });
+  }
+  else if(a === "del"){
+    var gid2 = V.gid;
+    vdel(gid2).then(function(){
+      var g = S.goals.filter(function(x){ return x.id === gid2; })[0]; if(g) g.video = false;
+      closeVideo(); render();
+    }).catch(function(){ vmsg("Couldn't delete the video."); });
+  }
+});
+$("vidfile").addEventListener("change", function(){
+  var f = this.files && this.files[0]; this.value = "";
+  if(!f) return;
+  V.blob = f; showBlob("review");
+});
+$("vidclose").addEventListener("click", closeVideo);
 
 function setTab(name){
   tabNow = name;
