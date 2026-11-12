@@ -46,8 +46,9 @@ h1{font:700 30px/1.1 var(--display);margin:0 0 6px;text-wrap:balance}
 h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:24px 0 10px}
 
 /* Bottom tabs */
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom) + 6px)}
-.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 12px var(--body);color:var(--muted);cursor:pointer;border-radius:12px}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(env(safe-area-inset-bottom) + 6px)}
+.tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 11px var(--body);color:var(--muted);cursor:pointer;border-radius:12px}
+.tabs button.proto{border-left:1px dashed var(--line)}
 .tabs svg{width:24px;height:24px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
 .tabs .badge{position:relative}
@@ -127,6 +128,35 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ach .txt .bar{margin-top:8px}
 .ach .txt em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
 .ach li.earned .txt em{color:var(--done);font-weight:700}
+/* Widget tab (prototype only) */
+.banner{background:#FFF4DC;color:#7A5200;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+.seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
+.seg button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
+.seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.stage{border-radius:28px;padding:26px 18px 22px;display:flex;flex-direction:column;align-items:center;gap:18px;min-height:300px;justify-content:center}
+.stage.lock{background:linear-gradient(170deg,#1F2A44 0%,#4A3A6B 60%,#8A4F6B 100%);color:#fff}
+.stage.home{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%)}
+.lockclock{text-align:center;color:#fff;line-height:1}
+.lockclock small{display:block;font:500 15px var(--body);opacity:.85;margin-bottom:6px}
+.lockclock b{font:600 62px var(--display)}
+.lw{width:280px;height:127px;background:rgba(255,255,255,.18);backdrop-filter:blur(12px);border-radius:20px;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;color:#fff}
+.lw-label{font:600 11px var(--body);text-transform:uppercase;letter-spacing:.05em;opacity:.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lw-step{font:700 18px/1.15 var(--body);margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lw-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.lw-btns button{border:0;border-radius:10px;padding:9px 0;font:700 13px var(--body);color:#fff;cursor:pointer;background:rgba(255,255,255,.28)}
+.lw-btns button:active{transform:scale(.96)}
+.lw-thanks{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center}
+.lw-thanks b{font:700 20px var(--display)}
+.lw-thanks span{font-size:12px;opacity:.85}
+.lw-thanks .linkbtn{color:#fff;font-size:12px;margin-top:2px}
+.home .w{width:100%}
+.statelist li{padding:12px 14px;justify-content:space-between}
+.statelist .what{display:flex;flex-direction:column;min-width:0}
+.statelist .what b{font:500 15px var(--body);overflow-wrap:anywhere}
+.statelist .what small{font-size:12px;color:var(--muted)}
+.rules{margin:0;padding-left:18px;font-size:14px;color:var(--ink);display:flex;flex-direction:column;gap:6px;list-style:disc;background:none}
+.rules li{display:list-item;background:none;padding:0;border-radius:0}
+.btn2{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);font:500 15px var(--body);padding:13px;border-radius:12px;cursor:pointer;margin-top:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -160,9 +190,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
       <p class="msg" id="msg"></p>
     </section>
 
-    <h2>Daily check-in</h2>
-    <div class="w"><div class="w-in" id="widget"></div></div>
-    <p class="cap">This is how the home-screen widget looks and works.</p>
+    <p class="cap">For now, answer your daily check-ins on the Widget tab.</p>
 
     <h2>Your goals</h2>
     <div class="stack" id="goalcards"></div>
@@ -175,6 +203,36 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <ul class="ach" id="achlist"></ul>
   </main>
 
+  <main class="screen hidden" id="screen-widget">
+    <p class="eyebrow">Prototype only</p>
+    <h1>Widget</h1>
+    <p class="banner">This tab won't be in the final app. It's here to try out and adjust how the widget works.</p>
+    <div class="seg" role="tablist" aria-label="Widget size">
+      <button role="tab" id="size-lock" data-size="lock" aria-selected="true">Lock screen</button>
+      <button role="tab" id="size-home" data-size="home" aria-selected="false">Home screen</button>
+    </div>
+    <div class="stage lock" id="stage">
+      <div class="lockclock" id="lockclock"><small id="lockdate"></small><b id="locktime"></b></div>
+      <div id="widget"></div>
+    </div>
+    <p class="cap" id="sizecap"></p>
+
+    <h2>Today's state</h2>
+    <ul class="statelist" id="statelist"></ul>
+    <button class="btn2" id="resetday" type="button">Reset today's answers</button>
+
+    <h2>How it works now</h2>
+    <div class="card">
+      <ul class="rules">
+        <li>Shows the first goal you haven't answered today.</li>
+        <li>Three buttons: Yes, Partly, No.</li>
+        <li>After an answer it says thank you, then moves to the next goal.</li>
+        <li>When every goal is answered it says you're all checked in.</li>
+        <li>Each answer is saved with the date and time and feeds Today and Achievements.</li>
+      </ul>
+    </div>
+  </main>
+
   <nav class="tabs" role="tablist" aria-label="Sections">
     <button role="tab" id="tab-goals" aria-selected="false" data-tab="goals">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/></svg>Goals
@@ -184,6 +242,9 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     </button>
     <button role="tab" id="tab-ach" aria-selected="false" data-tab="ach">
       <span class="badge"><svg viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M12 13v4M8.5 20h7"/></svg><i class="hidden" id="achdot"></i></span>Achievements
+    </button>
+    <button role="tab" id="tab-widget" class="proto" aria-selected="false" data-tab="widget">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="6" width="17" height="12" rx="3"/><path d="M7.5 12h9"/></svg>Widget
     </button>
   </nav>
 </div>
@@ -205,7 +266,7 @@ function keyFromNum(n){ var d = new Date(n * 86400000); return d.getUTCFullYear(
 (function load(){
   try{
     var s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.goals)){ S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : []; return; }
+    if(s && Array.isArray(s.goals)){ S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : []; S.wsize = s.wsize === "home" ? "home" : "lock"; return; }
   }catch(e){}
   S.goals = [{id:uid(), goal:"Read more books", step:"Read 20 pages"}];
 })();
@@ -279,18 +340,52 @@ function renderGoals(){
 var flashTimer = null;
 function renderWidget(){
   var w = $("widget");
+  var mode = S.wsize === "home" ? "home" : "lock";
   var pending = S.goals.filter(function(g){ return !todayAns(g.id); });
-  if(flash){
-    w.innerHTML = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+flash.answer+'</b> for "'+esc(flash.step)+'".</p></div>';
-  }else if(!S.goals.length){
-    w.innerHTML = '<div class="w-thanks"><span class="w-label">Daily check-in</span><p>Add a goal on the Goals tab to start.</p></div>';
-  }else if(pending.length){
-    var g = pending[0];
-    w.innerHTML = '<div><span class="w-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(g.step)+'</p><p class="w-q">Did you do it today?</p></div>' +
-      '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
+  var html;
+  if(mode === "lock"){
+    if(flash){
+      html = '<div class="lw"><div class="lw-thanks"><b>Thank you!</b><span>You answered '+flash.answer+'</span></div></div>';
+    }else if(!S.goals.length){
+      html = '<div class="lw"><div class="lw-thanks"><span>Add a goal in the app to start</span></div></div>';
+    }else if(pending.length){
+      var g = pending[0];
+      html = '<div class="lw"><div><div class="lw-label">'+esc(g.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left' : '')+'</div><p class="lw-step">'+esc(g.step)+'</p></div>' +
+        '<div class="lw-btns"><button data-a="Yes">Yes</button><button data-a="Partly">Partly</button><button data-a="No">No</button></div></div>';
+    }else{
+      html = '<div class="lw"><div class="lw-thanks"><b>All checked in</b><span>Thank you! See you tomorrow.</span><button class="linkbtn" id="undo" type="button">Undo last answer</button></div></div>';
+    }
   }else{
-    w.innerHTML = '<div class="w-thanks"><span class="w-label">All checked in</span><span class="big">Thank you!</span><p>See you tomorrow.</p><button class="linkbtn" id="undo" type="button">Undo last answer</button></div>';
+    var inner;
+    if(flash){
+      inner = '<div class="w-thanks"><span class="w-label">Logged</span><span class="big">Thank you!</span><p>You answered <b>'+flash.answer+'</b> for "'+esc(flash.step)+'".</p></div>';
+    }else if(!S.goals.length){
+      inner = '<div class="w-thanks"><span class="w-label">Daily check-in</span><p>Add a goal in the app to start.</p></div>';
+    }else if(pending.length){
+      var g2 = pending[0];
+      inner = '<div><span class="w-label">'+esc(g2.goal)+(S.goals.length > 1 ? ' &middot; '+pending.length+' left today' : '')+'</span><p class="w-goal">'+esc(g2.step)+'</p><p class="w-q">Did you do it today?</p></div>' +
+        '<div class="w-btns"><button class="Yes" data-a="Yes">Yes</button><button class="Partly" data-a="Partly">Partly</button><button class="No" data-a="No">No</button></div>';
+    }else{
+      inner = '<div class="w-thanks"><span class="w-label">All checked in</span><span class="big">Thank you!</span><p>See you tomorrow.</p><button class="linkbtn" id="undo" type="button">Undo last answer</button></div>';
+    }
+    html = '<div class="w"><div class="w-in">'+inner+'</div></div>';
   }
+  w.innerHTML = html;
+  $("stage").className = "stage " + mode;
+  $("lockclock").classList.toggle("hidden", mode !== "lock");
+  $("size-lock").setAttribute("aria-selected", mode === "lock");
+  $("size-home").setAttribute("aria-selected", mode === "home");
+  $("sizecap").textContent = mode === "lock" ? "Lock screen widgets are about this shape. Shown larger than life size." : "Home screen widget, medium size.";
+  var now = new Date();
+  $("lockdate").textContent = now.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
+  $("locktime").textContent = now.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"}).replace(/\s?[AP]M/i,"");
+}
+
+function renderWidgetTab(){
+  $("statelist").innerHTML = S.goals.length ? S.goals.map(function(g){
+    var a = todayAns(g.id);
+    return '<li><div class="what"><b>'+esc(g.step)+'</b><small>'+esc(g.goal)+'</small></div><span class="pill '+(a||"none")+'">'+(a||"Not yet")+'</span></li>';
+  }).join("") : '<li class="empty">No goals yet.</li>';
 }
 
 function renderToday(){
@@ -337,7 +432,7 @@ function updateDot(){
 }
 
 function render(){
-  renderGoals(); renderToday(); renderAch(); updateDot();
+  renderGoals(); renderToday(); renderAch(); renderWidgetTab(); updateDot();
   save();
 }
 
@@ -376,9 +471,19 @@ $("widget").addEventListener("click", function(e){
   }
 });
 
+document.querySelector(".seg").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-size]"); if(!b) return;
+  S.wsize = b.dataset.size; render();
+});
+$("resetday").addEventListener("click", function(){
+  var t = today();
+  S.log = S.log.filter(function(e){ return ymd(new Date(e.ts)) !== t; });
+  flash = null; render();
+});
+
 function setTab(name){
   tabNow = name;
-  ["goals","today","ach"].forEach(function(n){
+  ["goals","today","ach","widget"].forEach(function(n){
     $("screen-"+n).classList.toggle("hidden", n !== name);
     $("tab-"+n).setAttribute("aria-selected", n === name);
   });
