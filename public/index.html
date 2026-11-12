@@ -128,6 +128,9 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ach .txt .bar{margin-top:8px}
 .ach .txt em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
 .ach li.earned .txt em{color:var(--done);font-weight:700}
+.addbtn{width:100%;border:0;background:var(--accent);color:#fff;font:700 17px var(--body);border-radius:14px;padding:14px 16px;min-height:72px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.addbtn span{font-size:26px;line-height:1;font-weight:500}
+.addbtn:active{transform:scale(.99)}
 /* Plan maker */
 .daysel{display:flex;gap:6px;margin-bottom:8px}
 .daysel button{flex:1;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 14px var(--body);padding:11px 0;border-radius:12px;cursor:pointer}
@@ -189,7 +192,8 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <p class="eyebrow">What you're working toward</p>
     <h1>Goals</h1>
     <p class="sub">Pick one or a couple, up to 3. Tell us the goal and we'll plan what to do each day.</p>
-    <form class="goalform" id="form">
+    <button type="button" class="addbtn" id="addbtn"><span aria-hidden="true">+</span>Add goal</button>
+    <form class="goalform hidden" id="form">
       <label for="newgoal">Your goal</label>
       <input id="newgoal" type="text" maxlength="120" placeholder="Learn to cook five dinners" autocomplete="off">
       <div id="planopts">
@@ -205,6 +209,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
       <p class="errtxt hidden" id="planerr" role="alert"></p>
       <button type="submit" id="makeplan">Make my plan</button>
       <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
+      <button type="button" class="linkbtn alt" id="canceladd">Cancel</button>
     </form>
     <div class="draft hidden" id="draft"></div>
     <p class="sub hidden" id="capnote">You have 3 goals, which is the most you can track. Delete one to add another.</p>
@@ -370,7 +375,7 @@ function earnedList(){
 }
 
 /* Render */
-var draft = null, manual = false, planDays = 7, planning = false;
+var draft = null, manual = false, planDays = 7, planning = false, adding = false;
 
 function showErr(msg){ $("planerr").textContent = msg; $("planerr").classList.toggle("hidden", !msg); }
 
@@ -395,7 +400,8 @@ function renderDraft(){
 
 function renderGoals(){
   var full = S.goals.length >= MAX_GOALS;
-  $("form").classList.toggle("hidden", full || !!draft);
+  $("form").classList.toggle("hidden", !adding || full || !!draft);
+  $("addbtn").classList.toggle("hidden", adding || !!draft || full);
   $("capnote").classList.toggle("hidden", !full);
   renderForm(); renderDraft();
   $("goallist").innerHTML = S.goals.length ? S.goals.map(function(g){
@@ -534,7 +540,7 @@ $("form").addEventListener("submit", function(e){
   if(manual){
     var st = $("newstep").value.trim(); if(!st) return;
     S.goals.push({id:uid(), goal:g, step:st});
-    $("newgoal").value = ""; $("newstep").value = ""; showErr(""); render();
+    $("newgoal").value = ""; $("newstep").value = ""; showErr(""); adding = false; render();
   }else{
     makePlan(g, planDays);
   }
@@ -554,8 +560,14 @@ $("draft").addEventListener("click", function(e){
   if(b.dataset.act === "save"){
     var steps = draft.steps.map(function(s){ return String(s).trim() || ("Work on: " + draft.goal); });
     S.goals.push({id:uid(), goal:draft.goal, plan:steps, start:today()});
-    draft = null; $("newgoal").value = ""; render();
+    draft = null; $("newgoal").value = ""; adding = false; render();
   }
+});
+$("addbtn").addEventListener("click", function(){
+  adding = true; render(); $("newgoal").focus();
+});
+$("canceladd").addEventListener("click", function(){
+  adding = false; draft = null; manual = false; showErr(""); $("newgoal").value = ""; $("newstep").value = ""; render();
 });
 $("goallist").addEventListener("click", function(e){
   var b = e.target.closest("button[data-del]"); if(!b) return;
