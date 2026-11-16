@@ -223,6 +223,13 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ap-stats div{background:var(--card);border-radius:14px;padding:14px}
 .ap-stats b{display:block;font:700 26px var(--display);font-variant-numeric:tabular-nums}
 .ap-stats span{font-size:13px;color:var(--muted)}
+.fv-user{text-align:center;margin:0 0 4px}
+.fv-user h1{font:700 24px var(--display);margin:0;overflow-wrap:anywhere}
+.fv-user small{color:var(--muted);font-size:14px}
+.fgoal{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:12px 14px;margin-bottom:8px;font-size:15px}
+.fgoal span{color:var(--muted);font-size:13px;flex:none}
+.frow.tap{cursor:pointer}
+.finfo{text-align:left}
 /* Friends */
 .fh{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px}
 .friendadd{display:flex;gap:8px;margin-bottom:8px}
@@ -462,6 +469,15 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <p class="vid-msg hidden" id="vidmsg" role="alert"></p>
     <div class="vid-actions" id="vidactions"></div>
     <input type="file" accept="video/*" capture="user" id="vidfile" class="hidden">
+  </div>
+
+  <div class="acctpanel hidden" id="fview" style="z-index:30" role="dialog" aria-modal="true" aria-label="Friend profile">
+    <button type="button" class="ap-back" id="fvback">&larr; Back</button>
+    <div class="ap-hero"><div class="bigavatar" id="fvavatar"></div></div>
+    <div class="fv-user"><h1 id="fvname"></h1><small id="fvuser"></small></div>
+    <p class="fmsg hidden" id="fvmsg"></p>
+    <dl class="ap-info"><div><dt>Member since</dt><dd id="fvsince"></dd></div></dl>
+    <div id="fvbody"></div>
   </div>
 
   <div class="acctpanel hidden" id="acctpanel" role="dialog" aria-modal="true" aria-label="Account">
@@ -776,7 +792,7 @@ function renderAccount(){
 }
 var FR = null;
 function friendAvatar(f){ return goodPic(f.pic) ? '<img src="'+f.pic+'" alt="">' : esc(((f.name || f.username).charAt(0) || "?").toUpperCase()); }
-function frow(f, btns){ return '<div class="frow"><span class="fav">'+friendAvatar(f)+'</span><div class="finfo"><b>'+esc(f.name || f.username)+'</b><small>@'+esc(f.username)+'</small></div>'+btns+'</div>'; }
+function frow(f, btns, tap){ return '<div class="frow'+(tap ? ' tap' : '')+'"'+(tap ? ' data-view="'+esc(f.username)+'" role="button" tabindex="0"' : '')+'><span class="fav">'+friendAvatar(f)+'</span><div class="finfo"><b>'+esc(f.name || f.username)+'</b><small>@'+esc(f.username)+'</small></div>'+btns+'</div>'; }
 function fbtn(act, user, label, alt){ return '<button type="button" class="fbtn'+(alt ? ' alt' : '')+'" data-fa="'+act+'" data-u="'+esc(user)+'">'+label+'</button>'; }
 function renderFriends(){
   var box = $("friendlists");
@@ -785,7 +801,7 @@ function renderFriends(){
   if(!FR){ box.innerHTML = '<p class="fmsg">Loading...</p>'; return; }
   var html = "";
   if(FR.incoming.length) html += '<div class="fh">Requests</div>' + FR.incoming.map(function(f){ return frow(f, fbtn("accept", f.username, "Accept") + fbtn("remove", f.username, "Decline", true)); }).join("");
-  html += '<div class="fh">Friends</div>' + (FR.friends.length ? FR.friends.map(function(f){ return frow(f, fbtn("remove", f.username, "Remove", true)); }).join("") : '<p class="fmsg">No friends yet. Add someone by their username.</p>');
+  html += '<div class="fh">Friends</div>' + (FR.friends.length ? FR.friends.map(function(f){ return frow(f, fbtn("remove", f.username, "Remove", true), true); }).join("") : '<p class="fmsg">No friends yet. Add someone by their username.</p>');
   if(FR.outgoing.length) html += '<div class="fh">Waiting for a reply</div>' + FR.outgoing.map(function(f){ return frow(f, fbtn("remove", f.username, "Cancel", true)); }).join("");
   box.innerHTML = html;
 }
@@ -794,12 +810,33 @@ function loadFriends(){
   if(!USER){ FR = null; renderFriends(); return; }
   fetch("/api/friends").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){ if(d) FR = d; renderFriends(); }).catch(function(){ renderFriends(); });
 }
+function viewFriend(u){
+  $("fvname").textContent = ""; $("fvuser").textContent = "@" + u; $("fvavatar").innerHTML = esc(u.charAt(0).toUpperCase());
+  $("fvsince").textContent = ""; $("fvbody").innerHTML = ""; $("fvmsg").className = "fmsg"; $("fvmsg").textContent = "Loading...";
+  $("fview").classList.remove("hidden");
+  fetch("/api/friends/profile?username=" + encodeURIComponent(u)).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); }).then(function(x){
+    if(!x.ok){ $("fvmsg").className = "fmsg err"; $("fvmsg").textContent = x.j.message || "Couldn't load that profile."; return; }
+    var d = x.j, saved = S;
+    $("fvmsg").className = "fmsg hidden";
+    $("fvname").textContent = d.name || d.username;
+    $("fvavatar").innerHTML = friendAvatar(d);
+    $("fvsince").textContent = d.created ? new Date(d.created).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) : "Not available";
+    try{
+      S = {goals:d.goals, log:d.log, seenAch:[], profile:{}};
+      var st = stats(), days = {}; S.log.forEach(function(e){ days[ymd(new Date(e.ts))] = 1; });
+      var earned = earnedList().filter(function(a){ return a.earned; }).length;
+      var html = '<h2>Goals</h2>' + (S.goals.length ? S.goals.map(function(g){ var n = streak(g.id); return '<div class="fgoal"><b>'+esc(g.goal)+'</b><span>'+(n ? n + (n === 1 ? " day" : " days") + " streak" : "No streak")+'</span></div>'; }).join("") : '<p class="fmsg">No goals yet.</p>');
+      html += '<h2>Progress</h2><div class="ap-stats">' + [[S.goals.length,"Goals"],[st.answers,"Check-ins"],[Object.keys(days).length,"Days active"],[st.best,"Best streak"],[earned,"Achievements"]].map(function(r){ return '<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>'; }).join("") + '</div>';
+    } finally { S = saved; }
+    $("fvbody").innerHTML = html;
+  }).catch(function(){ $("fvmsg").className = "fmsg err"; $("fvmsg").textContent = "Couldn't reach the server. Try again."; });
+}
 function openAccount(){
   $("apname").value = (S.profile && S.profile.name) || "";
   renderAccount(); friendMsg(""); renderFriends(); loadFriends();
   $("acctpanel").classList.remove("hidden");
 }
-function closeAccount(){ $("acctpanel").classList.add("hidden"); }
+function closeAccount(){ $("acctpanel").classList.add("hidden"); $("fview").classList.add("hidden"); }
 function processPhoto(file, cb){
   var url = URL.createObjectURL(file), img = new Image();
   img.onload = function(){
@@ -1262,8 +1299,14 @@ $("friendform").addEventListener("submit", function(e){
     })
     .catch(function(){ friendMsg("Couldn't reach the server. Try again.", false); });
 });
+$("fvback").addEventListener("click", function(){ $("fview").classList.add("hidden"); });
+$("friendlists").addEventListener("keydown", function(e){
+  if(e.key !== "Enter" && e.key !== " ") return;
+  var r = e.target.closest(".frow[data-view]"); if(r && e.target === r){ e.preventDefault(); viewFriend(r.dataset.view); }
+});
 $("friendlists").addEventListener("click", function(e){
-  var b = e.target.closest("button[data-fa]"); if(!b) return;
+  var b = e.target.closest("button[data-fa]");
+  if(!b){ var r = e.target.closest(".frow[data-view]"); if(r) viewFriend(r.dataset.view); return; }
   fetch("/api/friends/" + b.dataset.fa, {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:b.dataset.u})})
     .then(function(){ friendMsg(""); loadFriends(); }).catch(function(){});
 });

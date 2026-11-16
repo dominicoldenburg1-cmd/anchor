@@ -190,6 +190,26 @@ async function friendsRoute(path, request, env) {
   if (!me) return json({ error: "unauthorized" }, 401);
   if (path === "/api/friends") return json(await listFriends(env, me));
 
+  if (path === "/api/friends/profile") {
+    const uname = cleanUsername(new URL(request.url).searchParams.get("username"));
+    const t = uname ? await env.DB.prepare("SELECT id, username, name, pic, created FROM users WHERE username = ?").bind(uname).first() : null;
+    const ok = t && await env.DB.prepare(
+      "SELECT 1 AS x FROM friends WHERE status = 'accepted' AND ((requester = ? AND addressee = ?) OR (requester = ? AND addressee = ?))"
+    ).bind(me.id, t.id, t.id, me.id).first();
+    if (!ok) return json({ error: "not_found", message: "You can only view friends' profiles." }, 404);
+    // Share only goal names and check-in answers with dates. Daily steps and videos stay private.
+    let goals = [], log = [];
+    const row = await env.DB.prepare("SELECT json FROM states WHERE user_id = ?").bind(t.id).first();
+    if (row && row.json) {
+      try {
+        const s = JSON.parse(row.json);
+        goals = (Array.isArray(s.goals) ? s.goals : []).slice(0, 10).map((g) => ({ id: String(g.id), goal: String(g.goal || "").slice(0, 120) }));
+        log = (Array.isArray(s.log) ? s.log : []).slice(-3000).map((e) => ({ gid: String(e.gid), answer: e.answer, ts: Number(e.ts) || 0 }));
+      } catch (e) {}
+    }
+    return json({ username: t.username, name: t.name || "", pic: t.pic || "", created: t.created, goals, log });
+  }
+
   let b; try { b = await request.json(); } catch (e) { return json({ error: "bad_request", message: "Something went wrong. Try again." }, 400); }
   const username = cleanUsername(b.username);
   const t = username ? await env.DB.prepare("SELECT id, username FROM users WHERE username = ?").bind(username).first() : null;
@@ -287,7 +307,7 @@ export default {
 
       const accountRoutes = {
         "/api/signup": "POST", "/api/login": "POST", "/api/logout": "POST", "/api/me": "GET", "/api/state": "PUT", "/api/profile": "PUT",
-        "/api/friends": "GET", "/api/friends/add": "POST", "/api/friends/accept": "POST", "/api/friends/remove": "POST",
+        "/api/friends": "GET", "/api/friends/profile": "GET", "/api/friends/add": "POST", "/api/friends/accept": "POST", "/api/friends/remove": "POST",
       };
       if (accountRoutes[path]) {
         if (!env.DB) return json({ error: "not_configured" }, 501);
