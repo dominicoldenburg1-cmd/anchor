@@ -67,7 +67,7 @@ async function currentUser(request, env) {
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const th = await sha256Hex(token);
   const row = await env.DB.prepare(
-    "SELECT users.id AS id, users.username AS username FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = ? AND sessions.expires > ?"
+    "SELECT users.id AS id, users.username AS username, users.created AS created FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = ? AND sessions.expires > ?"
   ).bind(th, Date.now()).first();
   return row || null;
 }
@@ -131,7 +131,7 @@ async function me(request, env) {
   const row = await env.DB.prepare("SELECT json FROM states WHERE user_id = ?").bind(u.id).first();
   let state = null;
   if (row) { try { state = JSON.parse(row.json); } catch (e) { state = null; } }
-  return json({ username: u.username, state });
+  return json({ username: u.username, created: u.created, state });
 }
 
 async function putState(request, env) {

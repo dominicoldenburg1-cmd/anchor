@@ -204,6 +204,25 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .vid-actions button.rec{background:#E5584D}
 .vid-actions button.primary{background:var(--accent)}
 .vid-actions button.danger{color:#FFB4AE}
+/* Account circle + account panel */
+.avatarbtn{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;z-index:15;width:40px;height:40px;border-radius:50%;border:2px solid var(--card);background:var(--accent);color:#fff;font:700 17px var(--body);display:grid;place-items:center;overflow:hidden;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.avatarbtn img,.bigavatar img{width:100%;height:100%;object-fit:cover;display:block}
+.acctpanel{position:absolute;inset:0;z-index:25;background:var(--bg);padding:calc(env(safe-area-inset-top) + 16px) 20px calc(env(safe-area-inset-bottom) + 24px);overflow-y:auto}
+.ap-back{border:0;background:none;color:var(--accent-text);font:500 16px var(--body);cursor:pointer;padding:6px 0}
+.ap-hero{display:flex;flex-direction:column;align-items:center;gap:8px;margin:10px 0 18px}
+.bigavatar{width:104px;height:104px;border-radius:50%;background:var(--accent);color:#fff;font:700 44px var(--display);display:grid;place-items:center;overflow:hidden}
+.ap-photo{display:flex;gap:16px}
+.field{display:block;width:100%;font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.fl{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+.ap-info{background:var(--card);border-radius:14px;margin:16px 0 0;padding:0 14px}
+.ap-info div{display:flex;justify-content:space-between;gap:10px;padding:12px 0;font-size:15px}
+.ap-info div+div{border-top:1px solid var(--line)}
+.ap-info dt{color:var(--muted)}
+.ap-info dd{margin:0;font-weight:500;overflow-wrap:anywhere;text-align:right}
+.ap-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ap-stats div{background:var(--card);border-radius:14px;padding:14px}
+.ap-stats b{display:block;font:700 26px var(--display);font-variant-numeric:tabular-nums}
+.ap-stats span{font-size:13px;color:var(--muted)}
 /* Sign in */
 .auth{position:absolute;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px);overflow-y:auto}
 .auth-in{width:100%}
@@ -291,6 +310,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 </head>
 <body>
 <div class="phone">
+  <button type="button" class="avatarbtn" id="avatarbtn" aria-label="Account"></button>
 
   <main class="screen hidden" id="screen-goals">
     <p class="eyebrow">What you're working toward</p>
@@ -356,14 +376,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 
   <main class="screen hidden" id="screen-social">
     <h1>Social</h1>
-    <div class="card" id="acct"></div>
-    <h2>Appearance</h2>
-    <div class="authtabs" id="themeseg" role="tablist" aria-label="Appearance">
-      <button type="button" role="tab" data-t="system" aria-selected="true">System</button>
-      <button type="button" role="tab" data-t="light" aria-selected="false">Light</button>
-      <button type="button" role="tab" data-t="dark" aria-selected="false">Dark</button>
-    </div>
-    <div class="soon" style="margin-top:12px">Coming soon</div>
+    <div class="soon">Coming soon</div>
   </main>
 
   <main class="screen hidden" id="screen-widget">
@@ -434,6 +447,33 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <input type="file" accept="video/*" capture="user" id="vidfile" class="hidden">
   </div>
 
+  <div class="acctpanel hidden" id="acctpanel" role="dialog" aria-modal="true" aria-label="Account">
+    <button type="button" class="ap-back" id="apback">&larr; Back</button>
+    <div class="ap-hero">
+      <div class="bigavatar" id="bigavatar"></div>
+      <div class="ap-photo">
+        <button type="button" class="linkbtn" id="appick">Change photo</button>
+        <button type="button" class="linkbtn hidden" id="apremove">Remove photo</button>
+      </div>
+      <input type="file" id="apfile" accept="image/*" class="hidden">
+    </div>
+    <label class="fl" for="apname">Display name</label>
+    <input class="field" id="apname" type="text" maxlength="30" placeholder="Your name" autocomplete="off">
+    <dl class="ap-info">
+      <div><dt>Username</dt><dd id="apuser"></dd></div>
+      <div><dt>Member since</dt><dd id="apsince"></dd></div>
+    </dl>
+    <h2>Your progress</h2>
+    <div class="ap-stats" id="apstats"></div>
+    <h2>Appearance</h2>
+    <div class="authtabs" id="themeseg" role="tablist" aria-label="Appearance">
+      <button type="button" role="tab" data-t="system" aria-selected="true">System</button>
+      <button type="button" role="tab" data-t="light" aria-selected="false">Light</button>
+      <button type="button" role="tab" data-t="dark" aria-selected="false">Dark</button>
+    </div>
+    <button class="btn2" id="logout" type="button">Log out</button>
+  </div>
+
   <div class="auth" id="auth">
     <div class="auth-in">
       <h1>Anchor</h1>
@@ -458,7 +498,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 <script>
 var KEY = "anchor-v4";
 var MAX_GOALS = 3;
-var S = {goals:[], log:[], seenAch:[]};   // goal: {id, goal, step}   log: {gid, goal, step, answer, ts}
+var S = {goals:[], log:[], seenAch:[], profile:{}};   // goal: {id, goal, step}   log: {gid, goal, step, answer, ts}
 var tabNow = "today";
 var USER = null, LOCKED = true, syncT = null;   // LOCKED: nothing is saved until we know who is using the app
 var flash = null;
@@ -473,7 +513,7 @@ function keyFromNum(n){ var d = new Date(n * 86400000); return d.getUTCFullYear(
 (function load(){
   try{
     var s = JSON.parse(localStorage.getItem(KEY));
-    if(s && Array.isArray(s.goals)){ S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : []; S.wsize = s.wsize === "home" ? "home" : "lock"; return; }
+    if(s && Array.isArray(s.goals)){ S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : []; S.wsize = s.wsize === "home" ? "home" : "lock"; S.profile = s.profile && typeof s.profile === "object" ? s.profile : {}; return; }
   }catch(e){}
   S.goals = [{id:uid(), goal:"Read more books", step:"Read 20 pages"}];
 })();
@@ -683,10 +723,40 @@ function renderHistory(){
   box.innerHTML = out.join("");
 }
 
-function renderSocial(){
-  $("acct").innerHTML = USER
-    ? '<p class="acct-line">Signed in as <b>@'+esc(USER)+'</b></p><button class="btn2" id="logout" type="button">Log out</button>'
-    : '<p class="acct-line">Not signed in. Accounts are not set up yet.</p>';
+var CREATED = null;
+function goodPic(p){ return typeof p === "string" && p.indexOf("data:image/jpeg;base64,") === 0 && p.length < 200000; }
+function avatarInner(){
+  var pr = S.profile || {};
+  if(goodPic(pr.pic)) return '<img src="'+pr.pic+'" alt="">';
+  var n = (pr.name || USER || "?").trim();
+  return esc((n.charAt(0) || "?").toUpperCase());
+}
+function renderAccount(){
+  var pr = S.profile || {}, st = stats();
+  $("avatarbtn").innerHTML = avatarInner();
+  $("bigavatar").innerHTML = avatarInner();
+  $("apremove").classList.toggle("hidden", !goodPic(pr.pic));
+  $("apuser").textContent = USER ? "@" + USER : "Not signed in";
+  $("apsince").textContent = CREATED ? new Date(CREATED).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}) : "Not available";
+  $("logout").classList.toggle("hidden", !USER);
+  var days = {}; S.log.forEach(function(e){ days[ymd(new Date(e.ts))] = 1; });
+  var earned = earnedList().filter(function(x){ return x.earned; }).length;
+  $("apstats").innerHTML = [[S.goals.length,"Goals"],[st.answers,"Check-ins"],[Object.keys(days).length,"Days active"],[st.best,"Best streak"],[earned,"Achievements"]].map(function(r){
+    return '<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>';
+  }).join("");
+}
+function openAccount(){ $("apname").value = (S.profile && S.profile.name) || ""; renderAccount(); $("acctpanel").classList.remove("hidden"); }
+function closeAccount(){ $("acctpanel").classList.add("hidden"); }
+function processPhoto(file, cb){
+  var url = URL.createObjectURL(file), img = new Image();
+  img.onload = function(){
+    var s = Math.min(img.width, img.height), c = document.createElement("canvas");
+    c.width = c.height = 256;
+    c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
+    URL.revokeObjectURL(url); cb(c.toDataURL("image/jpeg", 0.85));
+  };
+  img.onerror = function(){ URL.revokeObjectURL(url); cb(null); };
+  img.src = url;
 }
 
 function renderWidgetTab(){
@@ -741,7 +811,7 @@ function updateDot(){
 }
 
 function render(){
-  renderGoals(); renderToday(); renderAch(); renderHistory(); renderWidgetTab(); renderSocial(); updateDot();
+  renderGoals(); renderToday(); renderAch(); renderHistory(); renderWidgetTab(); renderAccount(); updateDot();
   save();
 }
 
@@ -1024,15 +1094,16 @@ function setAuthMode(m){
 }
 function readLocal(key){ try{ var o = JSON.parse(localStorage.getItem(key)); return o && Array.isArray(o.goals) ? o : null; }catch(e){ return null; } }
 function applyState(s){
-  S = {goals:[], log:[], seenAch:[], wsize:"lock"};
+  S = {goals:[], log:[], seenAch:[], wsize:"lock", profile:{}};
   if(s && Array.isArray(s.goals)){
     S.goals = s.goals; S.log = Array.isArray(s.log) ? s.log : []; S.seenAch = Array.isArray(s.seenAch) ? s.seenAch : [];
     S.wsize = s.wsize === "home" ? "home" : "lock";
+    S.profile = s.profile && typeof s.profile === "object" ? s.profile : {};
   }
   slideIdx = null; draft = null; adding = false; manual = false;
 }
-function enterAccount(username, serverState){
-  USER = username;
+function enterAccount(username, serverState, created){
+  USER = username; CREATED = created || CREATED;
   try{ localStorage.setItem("anchor-lastuser", username); }catch(e){}
   applyState(serverState || readLocal("anchor-u-" + username));
   hideAuth(); setTab("today");
@@ -1052,7 +1123,7 @@ function loadMe(){
   return fetch("/api/me").then(function(r){
     if(r.status === 401){ showAuth(); return; }
     if(!r.ok){ USER = null; hideAuth(); return; }          // accounts not set up: use the app without them
-    return r.json().then(function(j){ enterAccount(j.username, j.state); });
+    return r.json().then(function(j){ enterAccount(j.username, j.state, j.created); });
   });
 }
 function boot(){
@@ -1080,7 +1151,7 @@ $("authform").addEventListener("submit", function(e){
         // first account on this phone keeps whatever was already saved here
         var carried = null;
         try{ if(!localStorage.getItem("anchor-carried")){ carried = readLocal(KEY); localStorage.setItem("anchor-carried", "1"); } }catch(e){}
-        USER = x.j.username;
+        USER = x.j.username; CREATED = Date.now();
         try{ localStorage.setItem("anchor-lastuser", USER); }catch(e){}
         applyState(carried); hideAuth(); setTab("today"); pushState(true);
       }else{
@@ -1089,14 +1160,33 @@ $("authform").addEventListener("submit", function(e){
     })
     .catch(function(){ $("authgo").disabled = false; authErr("Couldn't reach the server. Try again."); });
 });
-$("acct").addEventListener("click", function(e){
-  if(!e.target.closest("#logout")) return;
+$("logout").addEventListener("click", function(){
   clearTimeout(syncT);
   fetch("/api/logout", {method:"POST"}).catch(function(){}).then(function(){
     USER = null; try{ localStorage.removeItem("anchor-lastuser"); }catch(e){}
-    applyState(null); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
+    USER = null; CREATED = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
   });
 });
+
+/* Account circle and panel */
+$("avatarbtn").addEventListener("click", openAccount);
+$("apback").addEventListener("click", closeAccount);
+$("apname").addEventListener("input", function(){
+  if(!S.profile) S.profile = {};
+  S.profile.name = this.value.trim().slice(0, 30);
+  $("avatarbtn").innerHTML = avatarInner(); $("bigavatar").innerHTML = avatarInner();
+  save();
+});
+$("appick").addEventListener("click", function(){ $("apfile").click(); });
+$("apfile").addEventListener("change", function(){
+  var f = this.files && this.files[0]; this.value = ""; if(!f) return;
+  processPhoto(f, function(data){
+    if(!data) return;
+    if(!S.profile) S.profile = {};
+    S.profile.pic = data; render();
+  });
+});
+$("apremove").addEventListener("click", function(){ if(S.profile) delete S.profile.pic; render(); });
 
 /* Appearance (saved on this phone) */
 var THEME = "system";
