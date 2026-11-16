@@ -131,7 +131,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .goalform{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
 .goalform label{font-size:13px;color:var(--muted)}
 .goalform input{font:400 16px var(--body);padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);width:100%;margin-bottom:8px}
-.goalform button{border:0;background:var(--accent);color:#fff;font:700 15px var(--body);padding:14px;border-radius:12px;cursor:pointer;margin-top:2px}
+.goalform button[type="submit"]{border:0;background:var(--accent);color:#fff;font:700 15px var(--body);padding:14px;border-radius:12px;cursor:pointer;margin-top:2px}
 .glist li{padding:14px 8px 14px 16px;align-items:flex-start}
 .glist .grow{flex:1;min-width:0}
 .glist .grow b{display:block;font:700 17px var(--body);overflow-wrap:anywhere}
@@ -223,6 +223,23 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ap-stats div{background:var(--card);border-radius:14px;padding:14px}
 .ap-stats b{display:block;font:700 26px var(--display);font-variant-numeric:tabular-nums}
 .ap-stats span{font-size:13px;color:var(--muted)}
+/* Friends */
+.fh{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:16px 0 8px}
+.friendadd{display:flex;gap:8px;margin-bottom:8px}
+.friendadd .field{flex:1;min-width:0;width:auto}
+.fbtn{border:0;border-radius:10px;padding:9px 13px;font:700 13px var(--body);cursor:pointer;background:var(--accent);color:#fff;flex:none}
+.fbtn.alt{background:var(--chip);color:var(--ink)}
+.fbtn.big{padding:0 20px;font-size:15px;border-radius:12px}
+.frow{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.fav{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;font:700 16px var(--body);display:grid;place-items:center;overflow:hidden;flex:none}
+.fav img{width:100%;height:100%;object-fit:cover;display:block}
+.finfo{flex:1;min-width:0}
+.finfo b{display:block;font:500 15px var(--body);overflow-wrap:anywhere}
+.finfo small{font-size:12px;color:var(--muted)}
+.frow .fbtn+.fbtn{margin-left:2px}
+.fmsg{font-size:13px;margin:0 0 8px;color:var(--muted)}
+.fmsg.ok{color:var(--done)}
+.fmsg.err{color:var(--no)}
 /* Sign in */
 .auth{position:absolute;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px);overflow-y:auto}
 .auth-in{width:100%}
@@ -463,6 +480,15 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
       <div><dt>Username</dt><dd id="apuser"></dd></div>
       <div><dt>Member since</dt><dd id="apsince"></dd></div>
     </dl>
+    <h2>Friends</h2>
+    <div id="friendsbox">
+      <form class="friendadd" id="friendform">
+        <input class="field" id="friendname" type="text" maxlength="21" placeholder="Friend's username" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Friend's username">
+        <button type="submit" class="fbtn big">Add</button>
+      </form>
+      <p class="fmsg hidden" id="friendmsg" role="status"></p>
+      <div id="friendlists"></div>
+    </div>
     <h2>Your progress</h2>
     <div class="ap-stats" id="apstats"></div>
     <h2>Appearance</h2>
@@ -483,10 +509,13 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
         <button type="button" role="tab" id="am-signup" data-mode="signup" aria-selected="false">Create account</button>
       </div>
       <form class="goalform" id="authform">
+        <label for="authname" id="authnamel" class="hidden">Your name</label>
+        <input id="authname" class="hidden" type="text" maxlength="30" autocomplete="name" placeholder="How your friends will see you">
         <label for="authuser">Username</label>
         <input id="authuser" type="text" maxlength="20" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false">
         <label for="authpass">Password</label>
         <input id="authpass" type="password" maxlength="100" autocomplete="current-password">
+        <button type="button" class="linkbtn alt" id="showpw">Show password</button>
         <p class="hint2 hidden" id="authhint">Usernames are 3 to 20 letters, numbers or underscores. Passwords need at least 8 characters.</p>
         <p class="errtxt hidden" id="autherr" role="alert"></p>
         <button type="submit" id="authgo">Sign in</button>
@@ -724,7 +753,7 @@ function renderHistory(){
 }
 
 var CREATED = null;
-function goodPic(p){ return typeof p === "string" && p.indexOf("data:image/jpeg;base64,") === 0 && p.length < 200000; }
+function goodPic(p){ return typeof p === "string" && p.length < 200000 && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(p); }
 function avatarInner(){
   var pr = S.profile || {};
   if(goodPic(pr.pic)) return '<img src="'+pr.pic+'" alt="">';
@@ -745,7 +774,31 @@ function renderAccount(){
     return '<div><b>'+r[0]+'</b><span>'+r[1]+'</span></div>';
   }).join("");
 }
-function openAccount(){ $("apname").value = (S.profile && S.profile.name) || ""; renderAccount(); $("acctpanel").classList.remove("hidden"); }
+var FR = null;
+function friendAvatar(f){ return goodPic(f.pic) ? '<img src="'+f.pic+'" alt="">' : esc(((f.name || f.username).charAt(0) || "?").toUpperCase()); }
+function frow(f, btns){ return '<div class="frow"><span class="fav">'+friendAvatar(f)+'</span><div class="finfo"><b>'+esc(f.name || f.username)+'</b><small>@'+esc(f.username)+'</small></div>'+btns+'</div>'; }
+function fbtn(act, user, label, alt){ return '<button type="button" class="fbtn'+(alt ? ' alt' : '')+'" data-fa="'+act+'" data-u="'+esc(user)+'">'+label+'</button>'; }
+function renderFriends(){
+  var box = $("friendlists");
+  if(!USER){ $("friendform").classList.add("hidden"); box.innerHTML = '<p class="fmsg">Sign in to add friends.</p>'; return; }
+  $("friendform").classList.remove("hidden");
+  if(!FR){ box.innerHTML = '<p class="fmsg">Loading...</p>'; return; }
+  var html = "";
+  if(FR.incoming.length) html += '<div class="fh">Requests</div>' + FR.incoming.map(function(f){ return frow(f, fbtn("accept", f.username, "Accept") + fbtn("remove", f.username, "Decline", true)); }).join("");
+  html += '<div class="fh">Friends</div>' + (FR.friends.length ? FR.friends.map(function(f){ return frow(f, fbtn("remove", f.username, "Remove", true)); }).join("") : '<p class="fmsg">No friends yet. Add someone by their username.</p>');
+  if(FR.outgoing.length) html += '<div class="fh">Waiting for a reply</div>' + FR.outgoing.map(function(f){ return frow(f, fbtn("remove", f.username, "Cancel", true)); }).join("");
+  box.innerHTML = html;
+}
+function friendMsg(t, ok){ var m = $("friendmsg"); m.textContent = t || ""; m.className = "fmsg" + (t ? (ok ? " ok" : " err") : " hidden"); }
+function loadFriends(){
+  if(!USER){ FR = null; renderFriends(); return; }
+  fetch("/api/friends").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){ if(d) FR = d; renderFriends(); }).catch(function(){ renderFriends(); });
+}
+function openAccount(){
+  $("apname").value = (S.profile && S.profile.name) || "";
+  renderAccount(); friendMsg(""); renderFriends(); loadFriends();
+  $("acctpanel").classList.remove("hidden");
+}
 function closeAccount(){ $("acctpanel").classList.add("hidden"); }
 function processPhoto(file, cb){
   var url = URL.createObjectURL(file), img = new Image();
@@ -1089,6 +1142,8 @@ function setAuthMode(m){
   $("authgo").textContent = m === "signup" ? "Create account" : "Sign in";
   $("authpass").autocomplete = m === "signup" ? "new-password" : "current-password";
   $("authhint").classList.toggle("hidden", m !== "signup");
+  $("authname").classList.toggle("hidden", m !== "signup");
+  $("authnamel").classList.toggle("hidden", m !== "signup");
   $("authsub").textContent = m === "signup" ? "Make an account to keep your goals on any phone." : "Sign in to pick up where you left off.";
   authErr("");
 }
@@ -1102,11 +1157,27 @@ function applyState(s){
   }
   slideIdx = null; draft = null; adding = false; manual = false;
 }
-function enterAccount(username, serverState, created){
+function enterAccount(username, serverState, created, srvName, srvPic){
   USER = username; CREATED = created || CREATED;
   try{ localStorage.setItem("anchor-lastuser", username); }catch(e){}
   applyState(serverState || readLocal("anchor-u-" + username));
+  if(!S.profile) S.profile = {};
+  if(srvName) S.profile.name = srvName;
+  if(goodPic(srvPic)) S.profile.pic = srvPic;
+  var need = (!srvName && S.profile.name) || (!goodPic(srvPic) && goodPic(S.profile.pic));
   hideAuth(); setTab("today");
+  if(need) pushProfile(true);
+}
+var profT = null;
+function pushProfile(now){
+  if(!USER) return;
+  clearTimeout(profT);
+  var go = function(){
+    if(!USER) return;
+    var pr = S.profile || {};
+    fetch("/api/profile", {method:"PUT", headers:{"content-type":"application/json"}, body:JSON.stringify({name:pr.name || "", pic:goodPic(pr.pic) ? pr.pic : ""})}).catch(function(){});
+  };
+  if(now) go(); else profT = setTimeout(go, 800);
 }
 function pushState(now){
   if(!USER) return;
@@ -1123,7 +1194,7 @@ function loadMe(){
   return fetch("/api/me").then(function(r){
     if(r.status === 401){ showAuth(); return; }
     if(!r.ok){ USER = null; hideAuth(); return; }          // accounts not set up: use the app without them
-    return r.json().then(function(j){ enterAccount(j.username, j.state, j.created); });
+    return r.json().then(function(j){ enterAccount(j.username, j.state, j.created, j.name, j.pic); });
   });
 }
 function boot(){
@@ -1133,19 +1204,28 @@ function boot(){
     else { showAuth(); authErr("Can't reach the server. Check your connection and try again."); }
   });
 }
+$("showpw").addEventListener("click", function(){
+  var shown = $("authpass").type === "text";
+  $("authpass").type = shown ? "password" : "text";
+  this.textContent = shown ? "Show password" : "Hide password";
+});
 $("am-signin").addEventListener("click", function(){ setAuthMode("signin"); });
 $("am-signup").addEventListener("click", function(){ setAuthMode("signup"); });
 $("authform").addEventListener("submit", function(e){
   e.preventDefault(); authErr("");
-  var u = $("authuser").value.trim(), pw = $("authpass").value;
-  if(!u || !pw) return;
+  var u = $("authuser").value.trim(), pw = $("authpass").value, nm = $("authname").value.trim();
   var signup = authMode === "signup";
+  if(signup){
+    if(!nm){ authErr("Add your name."); return; }
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(u)){ authErr("Usernames are 3 to 20 letters, numbers or underscores, with no spaces."); return; }
+    if(pw.length < 8){ authErr("Passwords need at least 8 characters. Yours has " + pw.length + "."); return; }
+  }else if(!u || !pw){ authErr("Enter your username and password."); return; }
   $("authgo").disabled = true;
-  fetch("/api/" + (signup ? "signup" : "login"), {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:u, password:pw})})
+  fetch("/api/" + (signup ? "signup" : "login"), {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:u, password:pw, name:nm})})
     .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
     .then(function(x){
       $("authgo").disabled = false;
-      if(!x.ok){ authErr(x.j.message || "Couldn't sign in. Try again."); return; }
+      if(!x.ok){ authErr(x.j.message || "Something went wrong on our end. Try again in a moment."); return; }
       $("authpass").value = "";
       if(signup){
         // first account on this phone keeps whatever was already saved here
@@ -1153,7 +1233,7 @@ $("authform").addEventListener("submit", function(e){
         try{ if(!localStorage.getItem("anchor-carried")){ carried = readLocal(KEY); localStorage.setItem("anchor-carried", "1"); } }catch(e){}
         USER = x.j.username; CREATED = Date.now();
         try{ localStorage.setItem("anchor-lastuser", USER); }catch(e){}
-        applyState(carried); hideAuth(); setTab("today"); pushState(true);
+        applyState(carried); if(!S.profile) S.profile = {}; S.profile.name = nm; hideAuth(); setTab("today"); pushState(true); pushProfile(true);
       }else{
         return loadMe();
       }
@@ -1164,8 +1244,28 @@ $("logout").addEventListener("click", function(){
   clearTimeout(syncT);
   fetch("/api/logout", {method:"POST"}).catch(function(){}).then(function(){
     USER = null; try{ localStorage.removeItem("anchor-lastuser"); }catch(e){}
-    USER = null; CREATED = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
+    USER = null; CREATED = null; FR = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
   });
+});
+
+/* Friends */
+$("friendform").addEventListener("submit", function(e){
+  e.preventDefault();
+  var u = $("friendname").value.trim().replace(/^@/, "");
+  if(!u) return;
+  friendMsg("");
+  fetch("/api/friends/add", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:u})})
+    .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+    .then(function(x){
+      if(!x.ok){ friendMsg(x.j.message || "Couldn't add that friend. Try again.", false); return; }
+      friendMsg(x.j.message || "Done.", true); $("friendname").value = ""; loadFriends();
+    })
+    .catch(function(){ friendMsg("Couldn't reach the server. Try again.", false); });
+});
+$("friendlists").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-fa]"); if(!b) return;
+  fetch("/api/friends/" + b.dataset.fa, {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({username:b.dataset.u})})
+    .then(function(){ friendMsg(""); loadFriends(); }).catch(function(){});
 });
 
 /* Account circle and panel */
@@ -1175,7 +1275,7 @@ $("apname").addEventListener("input", function(){
   if(!S.profile) S.profile = {};
   S.profile.name = this.value.trim().slice(0, 30);
   $("avatarbtn").innerHTML = avatarInner(); $("bigavatar").innerHTML = avatarInner();
-  save();
+  save(); pushProfile(false);
 });
 $("appick").addEventListener("click", function(){ $("apfile").click(); });
 $("apfile").addEventListener("change", function(){
@@ -1183,10 +1283,10 @@ $("apfile").addEventListener("change", function(){
   processPhoto(f, function(data){
     if(!data) return;
     if(!S.profile) S.profile = {};
-    S.profile.pic = data; render();
+    S.profile.pic = data; render(); pushProfile(true);
   });
 });
-$("apremove").addEventListener("click", function(){ if(S.profile) delete S.profile.pic; render(); });
+$("apremove").addEventListener("click", function(){ if(S.profile) delete S.profile.pic; render(); pushProfile(true); });
 
 /* Appearance (saved on this phone) */
 var THEME = "system";

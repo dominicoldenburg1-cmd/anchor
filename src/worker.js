@@ -41,10 +41,16 @@ let schemaReady = null;
 function ensureSchema(env) {
   if (!schemaReady) {
     schemaReady = env.DB.batch([
-      env.DB.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, created INTEGER NOT NULL)"),
+      env.DB.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, salt TEXT NOT NULL, hash TEXT NOT NULL, created INTEGER NOT NULL, name TEXT, pic TEXT)"),
+      env.DB.prepare("CREATE TABLE IF NOT EXISTS friends (requester INTEGER NOT NULL, addressee INTEGER NOT NULL, status TEXT NOT NULL, created INTEGER NOT NULL, PRIMARY KEY (requester, addressee))"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires INTEGER NOT NULL)"),
       env.DB.prepare("CREATE TABLE IF NOT EXISTS states (user_id INTEGER PRIMARY KEY, json TEXT NOT NULL, updated INTEGER NOT NULL)"),
-    ]).catch((e) => { schemaReady = null; throw e; });
+    ]).then(async () => {
+      // Older databases were created without these columns; adding them again is harmless.
+      for (const col of ["name TEXT", "pic TEXT"]) {
+        try { await env.DB.prepare("ALTER TABLE users ADD COLUMN " + col).run(); } catch (e) { /* already there */ }
+      }
+    }).catch((e) => { schemaReady = null; throw e; });
   }
   return schemaReady;
 }
@@ -67,7 +73,7 @@ async function currentUser(request, env) {
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   const th = await sha256Hex(token);
   const row = await env.DB.prepare(
-    "SELECT users.id AS id, users.username AS username, users.created AS created FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = ? AND sessions.expires > ?"
+    "SELECT users.id AS id, users.username AS username, users.created AS created, users.name AS name, users.pic AS pic FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token_hash = ? AND sessions.expires > ?"
   ).bind(th, Date.now()).first();
   return row || null;
 }
@@ -88,7 +94,8 @@ function cleanUsername(v) { return String(v || "").trim().toLowerCase(); }
 
 async function signup(request, env) {
   let b; try { b = await request.json(); } catch (e) { return json({ error: "bad_request", message: "Something went wrong. Try again." }, 400); }
-  const username = cleanUsername(b.username), password = String(b.password || "");
+  const username = cleanUsername(b.username), password = String(b.password || ""), name = String(b.name || "").trim().slice(0, 30);
+  if (!name) return json({ error: "name", message: "Add your name." }, 400);
   if (!/^[a-z0-9_]{3,20}$/.test(username)) return json({ error: "username", message: "Usernames are 3 to 20 letters, numbers or underscores." }, 400);
   if (password.length < 8 || password.length > 100) return json({ error: "password", message: "Passwords need at least 8 characters." }, 400);
   const exists = await env.DB.prepare("SELECT id FROM users WHERE username = ?").bind(username).first();
@@ -97,7 +104,7 @@ async function signup(request, env) {
   const hash = await hashPassword(password, salt);
   let res;
   try {
-    res = await env.DB.prepare("INSERT INTO users (username, salt, hash, created) VALUES (?, ?, ?, ?)").bind(username, toHex(salt), hash, Date.now()).run();
+    res = await env.DB.prepare("INSERT INTO users (username, salt, hash, created, name) VALUES (?, ?, ?, ?, ?)").bind(username, toHex(salt), hash, Date.now(), name).run();
   } catch (e) { return json({ error: "taken", message: "That username is taken." }, 409); }
   const userId = res.meta.last_row_id;
   const token = await createSession(env, userId);
@@ -131,7 +138,7 @@ async function me(request, env) {
   const row = await env.DB.prepare("SELECT json FROM states WHERE user_id = ?").bind(u.id).first();
   let state = null;
   if (row) { try { state = JSON.parse(row.json); } catch (e) { state = null; } }
-  return json({ username: u.username, created: u.created, state });
+  return json({ username: u.username, name: u.name || "", pic: u.pic || "", created: u.created, state });
 }
 
 async function putState(request, env) {
@@ -145,6 +152,75 @@ async function putState(request, env) {
     "INSERT INTO states (user_id, json, updated) VALUES (?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET json = excluded.json, updated = excluded.updated"
   ).bind(u.id, text, Date.now()).run();
   return json({ ok: true });
+}
+
+/* ---------- profile and friends ---------- */
+async function putProfile(request, env) {
+  const u = await currentUser(request, env);
+  if (!u) return json({ error: "unauthorized" }, 401);
+  let b; try { b = await request.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
+  const name = String(b.name || "").trim().slice(0, 30);
+  let pic = String(b.pic || "");
+  if (pic && (pic.indexOf("data:image/jpeg;base64,") !== 0 || pic.length > 120000 || !/^[A-Za-z0-9+/=:;,\-a-z]+$/.test(pic))) pic = "";
+  await env.DB.prepare("UPDATE users SET name = ?, pic = ? WHERE id = ?").bind(name, pic, u.id).run();
+  return json({ ok: true });
+}
+
+function shape(r) { return { username: r.username, name: r.name || "", pic: r.pic || "" }; }
+
+async function listFriends(env, me) {
+  const res = await env.DB.prepare(
+    "SELECT f.requester AS requester, f.status AS status, u.username AS username, u.name AS name, u.pic AS pic " +
+    "FROM friends f JOIN users u ON u.id = (CASE WHEN f.requester = ? THEN f.addressee ELSE f.requester END) " +
+    "WHERE f.requester = ? OR f.addressee = ?"
+  ).bind(me.id, me.id, me.id).all();
+  const out = { friends: [], incoming: [], outgoing: [] };
+  for (const r of res.results || []) {
+    if (r.status === "accepted") out.friends.push(shape(r));
+    else if (Number(r.requester) === Number(me.id)) out.outgoing.push(shape(r));
+    else out.incoming.push(shape(r));
+  }
+  const byName = (a, b) => (a.name || a.username).localeCompare(b.name || b.username);
+  out.friends.sort(byName); out.incoming.sort(byName); out.outgoing.sort(byName);
+  return out;
+}
+
+async function friendsRoute(path, request, env) {
+  const me = await currentUser(request, env);
+  if (!me) return json({ error: "unauthorized" }, 401);
+  if (path === "/api/friends") return json(await listFriends(env, me));
+
+  let b; try { b = await request.json(); } catch (e) { return json({ error: "bad_request", message: "Something went wrong. Try again." }, 400); }
+  const username = cleanUsername(b.username);
+  const t = username ? await env.DB.prepare("SELECT id, username FROM users WHERE username = ?").bind(username).first() : null;
+
+  if (path === "/api/friends/add") {
+    if (!t) return json({ error: "not_found", message: "No one has that username." }, 404);
+    if (Number(t.id) === Number(me.id)) return json({ error: "self", message: "That's your own username." }, 400);
+    const ex = await env.DB.prepare(
+      "SELECT requester, status FROM friends WHERE (requester = ? AND addressee = ?) OR (requester = ? AND addressee = ?)"
+    ).bind(me.id, t.id, t.id, me.id).first();
+    if (ex) {
+      if (ex.status === "accepted") return json({ status: "already", message: "You're already friends." });
+      if (Number(ex.requester) === Number(me.id)) return json({ status: "waiting", message: "You already sent a request to @" + t.username + "." });
+      await env.DB.prepare("UPDATE friends SET status = 'accepted' WHERE requester = ? AND addressee = ?").bind(t.id, me.id).run();
+      return json({ status: "accepted", message: "You and @" + t.username + " are now friends." });
+    }
+    await env.DB.prepare("INSERT INTO friends (requester, addressee, status, created) VALUES (?, ?, 'pending', ?)").bind(me.id, t.id, Date.now()).run();
+    return json({ status: "sent", message: "Request sent to @" + t.username + "." });
+  }
+
+  if (!t) return json({ error: "not_found", message: "No one has that username." }, 404);
+  if (path === "/api/friends/accept") {
+    const r = await env.DB.prepare("UPDATE friends SET status = 'accepted' WHERE requester = ? AND addressee = ? AND status = 'pending'").bind(t.id, me.id).run();
+    if (!r.meta || !r.meta.changes) return json({ error: "not_found", message: "That request is gone." }, 404);
+    return json({ ok: true });
+  }
+  if (path === "/api/friends/remove") {
+    await env.DB.prepare("DELETE FROM friends WHERE (requester = ? AND addressee = ?) OR (requester = ? AND addressee = ?)").bind(me.id, t.id, t.id, me.id).run();
+    return json({ ok: true });
+  }
+  return json({ error: "not_found" }, 404);
 }
 
 /* ---------- AI plan maker ---------- */
@@ -209,7 +285,10 @@ export default {
         return await makePlan(request, env);
       }
 
-      const accountRoutes = { "/api/signup": "POST", "/api/login": "POST", "/api/logout": "POST", "/api/me": "GET", "/api/state": "PUT" };
+      const accountRoutes = {
+        "/api/signup": "POST", "/api/login": "POST", "/api/logout": "POST", "/api/me": "GET", "/api/state": "PUT", "/api/profile": "PUT",
+        "/api/friends": "GET", "/api/friends/add": "POST", "/api/friends/accept": "POST", "/api/friends/remove": "POST",
+      };
       if (accountRoutes[path]) {
         if (!env.DB) return json({ error: "not_configured" }, 501);
         if (request.method !== accountRoutes[path]) return json({ error: "method" }, 405);
@@ -218,6 +297,8 @@ export default {
         if (path === "/api/login") return await login(request, env);
         if (path === "/api/logout") return await logout(request, env);
         if (path === "/api/me") return await me(request, env);
+        if (path === "/api/profile") return await putProfile(request, env);
+        if (path.indexOf("/api/friends") === 0) return await friendsRoute(path, request, env);
         return await putState(request, env);
       }
       return json({ error: "not_found" }, 404);
