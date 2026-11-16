@@ -9,12 +9,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Anchor">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>try{var t=localStorage.getItem("anchor-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one phone-sized screen, three bottom tabs (Goals, Today, Achievements). Light theme by choice. */
+/* Layout: one phone-sized screen, bottom tabs. Light and dark themes. */
 :root{
   color-scheme: light;
   --bg:#EEF1F5;
@@ -29,13 +30,65 @@
   --line:#E1E6EC;
   --display:'Fraunces',Georgia,serif;
   --body:'DM Sans',system-ui,-apple-system,sans-serif;
+  --accent-text:#1D5BD6;
+  --seg:#DDE3EA;
+  --chip:#E6EAEF;
+  --faint:#9AA6B3;
+  --widget-bg:rgba(255,255,255,.95);
+  --banner-bg:#FFF4DC;
+  --banner-ink:#7A5200;
+  --frame:#15202B;
+}
+@media (prefers-color-scheme: dark){
+:root:not([data-theme="light"]){
+  color-scheme: dark;
+  --bg:#0E141B;
+  --card:#18212B;
+  --ink:#E8EDF3;
+  --muted:#93A0AE;
+  --accent:#4F89F2;
+  --accent-soft:#1E2F4D;
+  --done:#2FB47E;
+  --warn:#E3A02A;
+  --no:#E5675D;
+  --line:#27323E;
+  --accent-text:#8DB4FF;
+  --seg:#232E3A;
+  --chip:#2A3643;
+  --faint:#5E6B7A;
+  --widget-bg:rgba(24,33,43,.96);
+  --banner-bg:#3A2F12;
+  --banner-ink:#F3D58A;
+  --frame:#2A3441;
+}
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --bg:#0E141B;
+  --card:#18212B;
+  --ink:#E8EDF3;
+  --muted:#93A0AE;
+  --accent:#4F89F2;
+  --accent-soft:#1E2F4D;
+  --done:#2FB47E;
+  --warn:#E3A02A;
+  --no:#E5675D;
+  --line:#27323E;
+  --accent-text:#8DB4FF;
+  --seg:#232E3A;
+  --chip:#2A3643;
+  --faint:#5E6B7A;
+  --widget-bg:rgba(24,33,43,.96);
+  --banner-bg:#3A2F12;
+  --banner-ink:#F3D58A;
+  --frame:#2A3441;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);display:flex;justify-content:center;align-items:center;-webkit-tap-highlight-color:transparent}
 .phone{width:100%;max-width:400px;height:100%;max-height:820px;background:var(--bg);display:flex;flex-direction:column;position:relative;overflow:hidden}
 @media (min-width:600px){
-  .phone{height:820px;border-radius:44px;border:10px solid #15202B;box-shadow:0 24px 60px rgba(21,32,43,.25)}
+  .phone{height:820px;border-radius:44px;border:10px solid var(--frame);box-shadow:0 24px 60px rgba(21,32,43,.25)}
 }
 button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .screen{flex:1;overflow-y:auto;padding:calc(env(safe-area-inset-top) + 26px) 20px 24px}
@@ -50,7 +103,7 @@ h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color
 .tabs button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;font:500 10px var(--body);color:var(--muted);cursor:pointer;border-radius:12px;min-width:0}
 .tabs button.proto{border-left:1px dashed var(--line)}
 .tabs svg{width:22px;height:22px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.tabs button[aria-selected="true"]{color:var(--accent);font-weight:700}
+.tabs button[aria-selected="true"]{color:var(--accent-text);font-weight:700}
 .tabs .badge{position:relative}
 .tabs .badge i{position:absolute;top:-2px;right:-6px;width:9px;height:9px;border-radius:50%;background:var(--no);border:2px solid var(--card)}
 
@@ -67,12 +120,12 @@ h2{font:600 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color
 ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:4px 6px 4px 4px}
 .empty{font-size:14px;color:var(--muted);background:var(--card);border-radius:14px;padding:14px;display:block}
-.linkbtn{border:0;background:none;color:var(--accent);font:500 14px var(--body);padding:0;cursor:pointer;text-decoration:underline}
+.linkbtn{border:0;background:none;color:var(--accent-text);font:500 14px var(--body);padding:0;cursor:pointer;text-decoration:underline}
 .pill{flex:none;font:700 12px var(--body);padding:5px 11px;border-radius:99px;color:#fff}
 .pill.Yes{background:var(--done)}
 .pill.Partly{background:var(--warn)}
 .pill.No{background:var(--no)}
-.pill.none{background:#E6EAEF;color:var(--muted)}
+.pill.none{background:var(--chip);color:var(--muted)}
 
 /* Goals tab */
 .goalform{background:var(--card);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
@@ -83,11 +136,11 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .glist .grow{flex:1;min-width:0}
 .glist .grow b{display:block;font:700 17px var(--body);overflow-wrap:anywhere}
 .glist .grow span{display:block;font-size:14px;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
-.iconbtn{border:0;background:none;width:40px;height:40px;border-radius:10px;cursor:pointer;color:#9AA6B3;display:grid;place-items:center;font-size:24px;line-height:1}
+.iconbtn{border:0;background:none;width:40px;height:40px;border-radius:10px;cursor:pointer;color:var(--faint);display:grid;place-items:center;font-size:24px;line-height:1}
 
 /* Today tab */
 .w{background:linear-gradient(160deg,#5B8DEF 0%,#8E7CF0 55%,#E58FB0 100%);border-radius:24px;padding:3px}
-.w-in{background:rgba(255,255,255,.95);border-radius:21px;padding:18px;min-height:176px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.w-in{background:var(--widget-bg);border-radius:21px;padding:18px;min-height:176px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
 .w-label{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .w-goal{font:700 24px/1.15 var(--display);margin:4px 0 2px;text-wrap:balance;overflow-wrap:anywhere}
 .w-q{font-size:14px;color:var(--muted);margin:0}
@@ -108,18 +161,18 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ghead span.step{display:block;font-size:14px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
 .week div{display:flex;flex-direction:column;align-items:center;gap:4px}
-.week i{width:22px;height:22px;border-radius:50%;background:#E6EAEF;display:block}
+.week i{width:22px;height:22px;border-radius:50%;background:var(--chip);display:block}
 .week i.Yes{background:var(--done)}
 .week i.Partly{background:var(--warn)}
 .week i.No{background:var(--no)}
 .week small{font-size:11px;color:var(--muted)}
 .week .tod small{color:var(--ink);font-weight:700}
 .streakline{font-size:13px;color:var(--muted)}
-.streakline b{color:var(--accent)}
+.streakline b{color:var(--accent-text)}
 
 /* Achievements tab */
 .ach li{padding:14px;align-items:flex-start}
-.medal{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#E6EAEF;color:#9AA6B3}
+.medal{flex:none;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--chip);color:var(--faint)}
 .medal svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .ach li.earned .medal{background:var(--done);color:#fff}
 .ach .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -154,7 +207,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 /* Sign in */
 .auth{position:absolute;inset:0;z-index:40;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 20px) 20px calc(env(safe-area-inset-bottom) + 20px);overflow-y:auto}
 .auth-in{width:100%}
-.authtabs{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
+.authtabs{display:flex;background:var(--seg);border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
 .authtabs button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
 .authtabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .acct-line{margin:0 0 4px;font-size:15px}
@@ -179,7 +232,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .draft .row button{flex:1;padding:13px;border-radius:12px;font:700 15px var(--body);cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink)}
 .draft .row button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .glist details{width:100%}
-.glist summary{cursor:pointer;font-size:13px;color:var(--accent);margin-top:8px;font-weight:500}
+.glist summary{cursor:pointer;font-size:13px;color:var(--accent-text);margin-top:8px;font-weight:500}
 .glist .plan{margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);list-style:none}
 .glist .plan li{display:block;background:none;padding:0;border-radius:0}
 .glist .plan li.now{color:var(--ink);font-weight:700}
@@ -195,8 +248,8 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .hnone{margin:0;font-size:14px;color:var(--muted)}
 .soon{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;font:700 22px var(--display);color:var(--muted)}
 /* Widget tab (prototype only) */
-.banner{background:#FFF4DC;color:#7A5200;border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
-.seg{display:flex;background:#DDE3EA;border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
+.banner{background:var(--banner-bg);color:var(--banner-ink);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
+.seg{display:flex;background:var(--seg);border-radius:12px;padding:3px;gap:3px;margin-bottom:14px}
 .seg button{flex:1;border:0;background:transparent;font:500 14px var(--body);color:var(--muted);padding:9px 0;border-radius:10px;cursor:pointer}
 .seg button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .stage{border-radius:28px;padding:26px 18px 22px;display:flex;flex-direction:column;align-items:center;gap:18px;min-height:300px;justify-content:center}
@@ -304,6 +357,12 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
   <main class="screen hidden" id="screen-social">
     <h1>Social</h1>
     <div class="card" id="acct"></div>
+    <h2>Appearance</h2>
+    <div class="authtabs" id="themeseg" role="tablist" aria-label="Appearance">
+      <button type="button" role="tab" data-t="system" aria-selected="true">System</button>
+      <button type="button" role="tab" data-t="light" aria-selected="false">Light</button>
+      <button type="button" role="tab" data-t="dark" aria-selected="false">Dark</button>
+    </div>
     <div class="soon" style="margin-top:12px">Coming soon</div>
   </main>
 
@@ -1038,6 +1097,25 @@ $("acct").addEventListener("click", function(e){
     applyState(null); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
   });
 });
+
+/* Appearance (saved on this phone) */
+var THEME = "system";
+try{ THEME = localStorage.getItem("anchor-theme") || "system"; }catch(e){}
+function applyTheme(t){
+  THEME = t;
+  var r = document.documentElement;
+  if(t === "light" || t === "dark") r.setAttribute("data-theme", t); else r.removeAttribute("data-theme");
+  try{ localStorage.setItem("anchor-theme", t); }catch(e){}
+  var dark = t === "dark" || (t !== "light" && window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+  var m = document.querySelector('meta[name="theme-color"]'); if(m) m.setAttribute("content", dark ? "#0E141B" : "#EEF1F5");
+  Array.prototype.forEach.call($("themeseg").children, function(b){ b.setAttribute("aria-selected", b.dataset.t === t); });
+}
+$("themeseg").addEventListener("click", function(e){
+  var b = e.target.closest("button[data-t]"); if(b) applyTheme(b.dataset.t);
+});
+var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+if(mq && mq.addEventListener) mq.addEventListener("change", function(){ if(THEME === "system") applyTheme("system"); });
+applyTheme(THEME);
 
 render();
 boot();
