@@ -199,8 +199,16 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .sc-g:last-child{border-bottom:0;padding-bottom:0}
 .sc-g b{font-weight:500;overflow-wrap:anywhere}
 .sc-g span{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
-.wrapbtn{width:100%;border:0;border-radius:18px;padding:16px;margin:0 0 18px;text-align:left;cursor:pointer;color:#fff;background:linear-gradient(135deg,#5B8DEF,#8E7CF0 55%,#E58FB0);display:flex;flex-direction:column;gap:2px}
+.wrapbtn{width:100%;border:0;border-radius:18px;padding:16px;margin:0 0 10px;text-align:left;cursor:pointer;color:#fff;background:linear-gradient(135deg,#5B8DEF,#8E7CF0 55%,#E58FB0);display:flex;flex-direction:column;gap:2px}
 .newpill{font-style:normal;font-size:11px;font-weight:700;background:#fff;color:#4A5FD0;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.wrapbtn.month{background:linear-gradient(135deg,#8E7CF0,#D77AA2 60%,#F0A63A)}
+.wrapbtn.last{margin-bottom:18px}
+.wr-cal{display:grid;grid-template-columns:repeat(7,26px);gap:6px;margin-top:6px;justify-content:center}
+.wr-cal .hd{width:26px;height:26px;border-color:rgba(255,255,255,.4);border-width:2px}
+.wr-cal .hd.Yes{background:#2FB47E;border-color:#2FB47E}
+.wr-cal .hd.Partly{background:#F0A63A;border-color:#F0A63A}
+.wr-cal .hd.No{background:#E5675D;border-color:#E5675D}
+.wr-cal .blank{width:26px;height:26px}
 .wb-t{font:700 18px var(--body)}
 .wb-s{font:400 13px var(--body);opacity:.9}
 .achcat{margin:0 0 20px}
@@ -510,6 +518,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <h1>Achievements</h1>
     <div class="streakcard" id="streakcard"></div>
     <button type="button" class="wrapbtn" id="wrapbtn"><span class="wb-t">Your week in review</span><span class="wb-s">See your week and share it</span></button>
+    <button type="button" class="wrapbtn month last" id="monthbtn"><span class="wb-t">Your month in review</span><span class="wb-s">Drops on the 1st at noon</span></button>
     <div id="achcats"></div>
   </main>
 
@@ -1058,7 +1067,7 @@ function updateDot(){
   var earned = earnedList().filter(function(x){ return x.earned; }).map(function(x){ return x.a.t; });
   var fresh = earned.filter(function(t){ return S.seenAch.indexOf(t) < 0; });
   if(tabNow === "ach"){ S.seenAch = earned; fresh = []; }
-  $("achdot").classList.toggle("hidden", fresh.length === 0 && !weekNew());
+  $("achdot").classList.toggle("hidden", fresh.length === 0 && !weekNew() && !monthNew());
 }
 
 function render(){
@@ -1418,6 +1427,8 @@ function renderAch(){
   renderStreak();
   var wn = weekNew();
   $("wrapbtn").innerHTML = '<span class="wb-t">Your week in review'+(wn ? ' <em class="newpill">New</em>' : '')+'</span><span class="wb-s">'+(wn ? 'Your week of '+weekReport().range+' is ready' : 'Drops every Sunday at noon. Tap to see last week again.')+'</span>';
+  var mn = monthNew(), mw = monthWindow();
+  $("monthbtn").innerHTML = '<span class="wb-t">Your month in review'+(mn ? ' <em class="newpill">New</em>' : '')+'</span><span class="wb-s">'+(mn ? 'Your '+mw.name+' is ready' : 'Drops on the 1st at noon. Tap to see '+mw.name+' again.')+'</span>';
   $("achcats").innerHTML = CATS.map(function(c){
     var items = list.filter(function(x){ return x.a.cat === c.k; }), e = items.filter(function(x){ return x.earned; }).length;
     return '<section class="achcat"><h2>'+c.t+'<span>'+e+' of '+items.length+'</span></h2><ul class="ach">' + items.map(function(x){
@@ -1531,15 +1542,16 @@ function weekNew(){
   var w = weekWindow();
   return wrSeen() !== w.key && S.log.some(function(e){ return e.ts >= w.startMs && e.ts < w.endMs; });
 }
-function weekReport(){
-  var w = weekWindow(), start = w.start, startMs = w.startMs;
-  var ents = S.log.filter(function(e){ return e.ts >= startMs && e.ts < w.endMs; });
+function periodReport(startN, endN){
+  var sp = keyFromNum(startN).split("-"), ep = keyFromNum(endN).split("-"), fmt = {month:"short", day:"numeric"};
+  var startMs = new Date(+sp[0], +sp[1]-1, +sp[2]).getTime(), endMs = new Date(+ep[0], +ep[1]-1, +ep[2] + 1).getTime();
+  var ents = S.log.filter(function(e){ return e.ts >= startMs && e.ts < endMs; });
   var cnt = {Yes:0, Partly:0, No:0}, sum = 0;
   ents.forEach(function(e){ if(e.answer in cnt) cnt[e.answer]++; sum += score(e.answer); });
   var m = dayBest(), days = [], i;
-  for(i = 0; i < 7; i++){
-    var k = keyFromNum(start + i), q = k.split("-"), d = new Date(+q[0], +q[1]-1, +q[2]);
-    days.push({a:m[k] || "", letter:d.toLocaleDateString(undefined,{weekday:"narrow"}), label:d.toLocaleDateString(undefined,{weekday:"short"})});
+  for(i = 0; i <= endN - startN; i++){
+    var k = keyFromNum(startN + i), q = k.split("-"), d = new Date(+q[0], +q[1]-1, +q[2]);
+    days.push({a:m[k] || "", n:startN + i, dow:d.getDay(), letter:d.toLocaleDateString(undefined,{weekday:"narrow"}), label:d.toLocaleDateString(undefined,{weekday:"short"})});
   }
   var perGoal = S.goals.map(function(g){
     var es = ents.filter(function(e){ return e.gid === g.id; }), s = 0, y = 0;
@@ -1547,15 +1559,97 @@ function weekReport(){
     return {name:g.goal, n:es.length, yes:y, avg:es.length ? s / es.length : 0};
   }).filter(function(x){ return x.n > 0; }).sort(function(a,b){ return b.avg - a.avg || b.n - a.n; });
   var dt = achDates({goals:S.goals, log:S.log});
-  var got = ACH.filter(function(a){ return dt[a.t] >= startMs && dt[a.t] < w.endMs; });
-  var sp = keyFromNum(start).split("-"), ep = keyFromNum(w.sat).split("-"), fmt = {month:"short", day:"numeric"};
+  var got = ACH.filter(function(a){ return dt[a.t] >= startMs && dt[a.t] < endMs; });
+  var run = 0, longest = 0;
+  days.forEach(function(d){ if(counts(d.a)){ run++; if(run > longest) longest = run; } else run = 0; });
   return {count:ents.length, cnt:cnt, pct:ents.length ? Math.round(sum / ents.length * 100) : 0, days:days,
-    daysActive:days.filter(function(d){ return d.a; }).length, streak:overallStreak(m, w.sat), best:overallBest(m),
-    goals:perGoal, top:perGoal[0] || null, ach:got,
+    daysActive:days.filter(function(d){ return d.a; }).length, streak:overallStreak(m, endN), best:overallBest(m), longest:longest,
+    goals:perGoal, top:perGoal[0] || null, ach:got, startN:startN, endN:endN,
     range:new Date(+sp[0], +sp[1]-1, +sp[2]).toLocaleDateString(undefined, fmt) + " to " + new Date(+ep[0], +ep[1]-1, +ep[2]).toLocaleDateString(undefined, fmt)};
 }
-var WR = {r:null, i:0, n:0};
-function wrSlides(r){
+function weekReport(){ var w = weekWindow(); return periodReport(w.start, w.sat); }
+
+/* The monthly review covers the last full calendar month and drops at noon on the 1st. */
+function monthWindow(){
+  var now = new Date(), y = now.getFullYear(), mo = now.getMonth();
+  var D = now < new Date(y, mo, 1, 12) ? new Date(y, mo - 1, 1) : new Date(y, mo, 1);
+  var s = new Date(D.getFullYear(), D.getMonth() - 1, 1), e = new Date(D.getFullYear(), D.getMonth(), 0);
+  var ps = new Date(s.getFullYear(), s.getMonth() - 1, 1);
+  var sn = dayNum(ymd(s)), en = dayNum(ymd(e));
+  return {start:sn, end:en, key:ymd(s).slice(0, 7), name:s.toLocaleDateString(undefined, {month:"long"}), prevName:ps.toLocaleDateString(undefined, {month:"long"}), prevStart:dayNum(ymd(ps)), prevEnd:sn - 1,
+    startMs:new Date(s.getFullYear(), s.getMonth(), 1).getTime(), endMs:new Date(D.getFullYear(), D.getMonth(), 1).getTime()};
+}
+function mrSeen(){ try{ return localStorage.getItem("anchor-mrseen"); }catch(e){ return null; } }
+function monthNew(){
+  var w = monthWindow();
+  return mrSeen() !== w.key && S.log.some(function(e){ return e.ts >= w.startMs && e.ts < w.endMs; });
+}
+function countBetween(a, b){ return S.log.filter(function(e){ var n = dayNum(ymd(new Date(e.ts))); return n >= a && n <= b; }).length; }
+function monthReport(){
+  var w = monthWindow(), r = periodReport(w.start, w.end);
+  r.title = w.name; r.range = w.name; r.prevName = w.prevName; r.nDays = r.days.length;
+  r.startDow = r.days[0].dow;
+  var perDay = {}; S.log.forEach(function(e){ var n = dayNum(ymd(new Date(e.ts))); perDay[n] = (perDay[n] || 0) + 1; });
+  var bestW = null, s, fmt = {month:"short", day:"numeric"};
+  for(s = w.start; s <= w.end; s += 7){
+    var e2 = Math.min(s + 6, w.end), c = 0, n;
+    for(n = s; n <= e2; n++) c += perDay[n] || 0;
+    if(!bestW || c > bestW.c) bestW = {c:c, s:s, e:e2};
+  }
+  if(bestW && bestW.c){
+    var a = keyFromNum(bestW.s).split("-"), b2 = keyFromNum(bestW.e).split("-");
+    r.bestWeek = {c:bestW.c, range:new Date(+a[0], +a[1]-1, +a[2]).toLocaleDateString(undefined, fmt) + " to " + new Date(+b2[0], +b2[1]-1, +b2[2]).toLocaleDateString(undefined, fmt)};
+  }
+  var byDow = [0,0,0,0,0,0,0]; r.days.forEach(function(d){ if(counts(d.a)) byDow[d.dow]++; });
+  var bd = 0; byDow.forEach(function(v, i){ if(v > byDow[bd]) bd = i; });
+  if(byDow[bd]) r.bestDow = new Date(2026, 0, 4 + bd).toLocaleDateString(undefined, {weekday:"long"});   // Jan 4 2026 is a Sunday
+  r.prevCount = countBetween(w.prevStart, w.prevEnd);
+  return r;
+}
+var WR = {kind:"week", r:null, i:0, slides:[]};
+function monthSlides(r){
+  if(!r.count) return ['<p class="wr-k">Your month in review</p><h2>No check-ins in '+r.title+'</h2><p>Check in during the month and your review drops on the 1st at noon.</p>'];
+  var tier = r.pct >= 80 ? "What a month. You were locked in." : r.pct >= 50 ? "A solid month of momentum." : "Every month is a fresh start.";
+  var out = [];
+  out.push('<p class="wr-k">Your month in review</p><h2>'+r.title+'</h2><p>You checked in</p><div class="wr-big">'+r.count+'</div><p>times across '+r.daysActive+' of '+r.nDays+' days</p>');
+  var cal = ""; var i; for(i = 0; i < r.startDow; i++) cal += '<span class="blank"></span>';
+  r.days.forEach(function(d){ cal += '<i class="hd '+d.a+'" title="'+d.label+'"></i>'; });
+  out.push('<h2>Every day of '+r.title+'</h2><div class="wr-cal">'+cal+'</div><p>Green is Yes, amber is Partly, red is No.</p>');
+  out.push('<h2>'+tier+'</h2><p>'+r.pct+'% completion</p>' + ["Yes","Partly","No"].map(function(a){ return '<div class="wr-bar"><span>'+a+'</span><div><i style="width:'+Math.round(r.cnt[a] / r.count * 100)+'%"></i></div><b>'+r.cnt[a]+'</b></div>'; }).join(""));
+  if(r.bestWeek || r.bestDow) out.push('<p class="wr-k">Your rhythm</p>' + (r.bestWeek ? '<h2>'+r.bestWeek.range+'</h2><p>Your busiest week, with '+r.bestWeek.c+' check-ins</p>' : '') + (r.bestDow ? '<p>You showed up most on <b>'+r.bestDow+'s</b>.</p>' : ''));
+  out.push(r.top ? '<p class="wr-k">Your top goal</p><h2>'+esc(r.top.name)+'</h2><p>'+r.top.yes+' Yes out of '+r.top.n+' check-ins</p>' + (r.goals.length > 1 ? '<div class="wr-list">'+r.goals.slice(1).map(function(g){ return '<div>'+esc(g.name)+'<small>'+Math.round(g.avg * 100)+'% completion</small></div>'; }).join("")+'</div>' : '') : '<h2>Keep going</h2>');
+  out.push('<div class="wr-flame">'+ICON.flame+'</div><div class="wr-big">'+r.longest+'</div><p>'+(r.longest === 1 ? "day" : "days")+' was your longest streak in '+r.title+'</p><p>Your all-time best is '+r.best+'.</p>');
+  out.push(r.ach.length ? '<p class="wr-k">New in '+r.title+'</p><h2>'+r.ach.length+(r.ach.length === 1 ? ' achievement' : ' achievements')+'</h2><div class="wr-list">'+r.ach.map(function(a){ return '<div>'+a.t+'<small>'+a.d+'</small></div>'; }).join("")+'</div>' : '<h2>No new achievements in '+r.title+'</h2>');
+  if(r.prevCount){
+    var dlt = r.count - r.prevCount;
+    out.push('<p class="wr-k">Compared with '+r.prevName+'</p><h2>'+(dlt > 0 ? 'Up ' + dlt : dlt < 0 ? 'Down ' + (-dlt) : 'The same as')+(dlt === 0 ? ' '+r.prevName : ' check-ins')+'</h2><p>'+r.count+' in '+r.title+' versus '+r.prevCount+' in '+r.prevName+'.</p>');
+  }
+  out.push('<h2>Share your month</h2><canvas class="wr-prev" id="wrprev"></canvas><button type="button" class="wr-go" id="wrgo">Share</button>');
+  return out;
+}
+function monthCard(r){
+  var b = cardBase(), c = b.c;
+  c.textAlign = "center"; c.fillStyle = "#fff"; c.font = "700 96px " + CF_DISP;
+  c.fillText(who() ? who() + "'s " + r.title : "My " + r.title, 540, 265);
+  c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 38px " + CF_BODY; c.fillText("Month in review", 540, 325);
+  c.fillStyle = "#fff"; c.font = "700 220px " + CF_DISP; c.fillText(String(r.count), 540, 545);
+  c.fillStyle = "rgba(255,255,255,.9)"; c.font = "500 42px " + CF_BODY; c.fillText(r.count === 1 ? "check-in" : "check-ins", 540, 605);
+  var col = {Yes:"#2FB47E", Partly:"#F0A63A", No:"#E5675D"};
+  r.days.forEach(function(d, i){
+    var idx = r.startDow + i, x = 540 + ((idx % 7) - 3) * 74, y = 685 + Math.floor(idx / 7) * 64;
+    c.beginPath(); c.arc(x, y, 24, 0, Math.PI * 2);
+    if(d.a){ c.fillStyle = col[d.a]; c.fill(); } else { c.lineWidth = 4; c.strokeStyle = "rgba(255,255,255,.5)"; c.stroke(); }
+  });
+  [[r.pct + "%", "completion"], [r.daysActive + "/" + r.nDays, "days active"], [String(r.longest), "longest streak"]].forEach(function(s, i){
+    var x = 240 + i * 300;
+    c.fillStyle = "#fff"; c.font = "700 78px " + CF_DISP; c.fillText(s[0], x, 1100);
+    c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 30px " + CF_BODY; c.fillText(s[1], x, 1146);
+  });
+  if(r.top){ c.fillStyle = "rgba(255,255,255,.9)"; c.font = "500 36px " + CF_BODY; c.fillText(wrapLines(c, "Top goal: " + r.top.name, 900, 1)[0], 540, 1215); }
+  return b.cv;
+}
+
+function weekSlides(r){
   if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins that week</h2><p>Check in during the week and your review drops every Sunday at noon.</p>'];
   var tier = r.pct >= 80 ? "You were locked in." : r.pct >= 50 ? "Solid momentum." : "A fresh start is always one day away.";
   var out = [];
@@ -1576,20 +1670,26 @@ function drawWr(){
   $("wrslide").innerHTML = sl[i];
   $("wrshare").classList.toggle("hidden", !WR.r.count);
   var pv = $("wrprev");
-  if(pv){ var cv = weekCard(WR.r); pv.width = 540; pv.height = 675; pv.getContext("2d").drawImage(cv, 0, 0, 540, 675); }
+  if(pv){ var cv = WR.kind === "month" ? monthCard(WR.r) : weekCard(WR.r); pv.width = 540; pv.height = 675; pv.getContext("2d").drawImage(cv, 0, 0, 540, 675); }
 }
-function openWrapped(){
-  WR.r = weekReport(); WR.slides = wrSlides(WR.r); WR.i = 0;
-  try{ localStorage.setItem("anchor-wrseen", weekWindow().key); }catch(e){}
+function openWrapped(kind){
+  WR.kind = kind; WR.r = kind === "month" ? monthReport() : weekReport();
+  WR.slides = kind === "month" ? monthSlides(WR.r) : weekSlides(WR.r); WR.i = 0;
+  try{ if(kind === "month") localStorage.setItem("anchor-mrseen", monthWindow().key); else localStorage.setItem("anchor-wrseen", weekWindow().key); }catch(e){}
   renderAch(); updateDot();
   $("wrapped").classList.remove("hidden"); drawWr();
 }
-function shareWeek(){ shareCanvas(weekCard(WR.r), "anchor-my-week.png", "My week on Anchor: " + WR.r.count + " check-ins, " + WR.r.pct + "% completion."); }
-$("wrapbtn").addEventListener("click", openWrapped);
+function shareReview(){
+  var r = WR.r, m = WR.kind === "month";
+  shareCanvas(m ? monthCard(r) : weekCard(r), m ? "anchor-my-" + r.title.toLowerCase() + ".png" : "anchor-my-week.png",
+    "My " + (m ? r.title : "week") + " on Anchor: " + r.count + " check-ins, " + r.pct + "% completion.");
+}
+$("wrapbtn").addEventListener("click", function(){ openWrapped("week"); });
+$("monthbtn").addEventListener("click", function(){ openWrapped("month"); });
 $("wrclose").addEventListener("click", function(){ $("wrapped").classList.add("hidden"); });
-$("wrshare").addEventListener("click", shareWeek);
+$("wrshare").addEventListener("click", shareReview);
 $("wrapped").addEventListener("click", function(e){
-  if(e.target.closest("button")){ if(e.target.id === "wrgo") shareWeek(); return; }
+  if(e.target.closest("button")){ if(e.target.id === "wrgo") shareReview(); return; }
   var x = e.clientX - this.getBoundingClientRect().left;
   if(x < this.clientWidth / 3){ if(WR.i > 0){ WR.i--; drawWr(); } }
   else if(WR.i < WR.slides.length - 1){ WR.i++; drawWr(); }
