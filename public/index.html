@@ -380,6 +380,14 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
         <input id="newgoal" type="text" maxlength="120" placeholder="Learn to cook five dinners" autocomplete="off">
         <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
       </div>
+      <div class="wstep hidden" data-s="kind">
+        <label class="wq">Is this a goal or a habit?</label>
+        <div class="daysel" id="kindsel">
+          <button type="button" data-k="goal" aria-pressed="true">Goal</button>
+          <button type="button" data-k="habit" aria-pressed="false">Habit</button>
+        </div>
+        <p class="hint2" id="kindhint"></p>
+      </div>
       <div class="wstep hidden" data-s="why">
         <label class="wq" for="newwhy">Why does it matter to you?</label>
         <input id="newwhy" type="text" maxlength="160" placeholder="I want to feel healthier" autocomplete="off">
@@ -401,12 +409,9 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
         </div>
       </div>
       <div class="wstep hidden" data-s="days">
-        <label class="wq">How long should the plan last?</label>
-        <div class="daysel" id="daysel">
-          <button type="button" data-days="7" aria-pressed="true">7 days</button>
-          <button type="button" data-days="14" aria-pressed="false">14 days</button>
-          <button type="button" data-days="30" aria-pressed="false">30 days</button>
-        </div>
+        <label class="wq" id="dayq">How long should the plan last?</label>
+        <div class="daysel wrap" id="daysel"></div>
+        <p class="hint2" id="dayhint"></p>
       </div>
       <div class="wstep hidden" data-s="step">
         <label class="wq" for="newstep">What's the daily step?</label>
@@ -637,10 +642,10 @@ function esc(s){ var d=document.createElement("div"); d.textContent=s; return d.
 /* Plans: a goal has either a day-by-day plan (plan + start) or one repeating step */
 function dayIndex(g){ return Math.max(0, dayNum(today()) - dayNum(g.start || today())); }
 function stepOf(g){
-  if(g.plan && g.plan.length){ var i = dayIndex(g); return i < g.plan.length ? g.plan[i] : null; }
+  if(g.plan && g.plan.length){ var i = dayIndex(g); return i < g.plan.length ? g.plan[i] : (g.habit ? g.plan[g.plan.length - 1] : null); }
   return g.step || null;
 }
-function dayLabel(g){ return (g.plan && g.plan.length) ? (dayIndex(g) < g.plan.length ? "Day " + (dayIndex(g)+1) + " of " + g.plan.length : "Plan finished") : ""; }
+function dayLabel(g){ return (g.habit && g.plan && g.plan.length && dayIndex(g) >= g.plan.length) ? "Habit, day " + (dayIndex(g)+1) : (g.plan && g.plan.length) ? (dayIndex(g) < g.plan.length ? "Day " + (dayIndex(g)+1) + " of " + g.plan.length : "Plan finished") : ""; }
 function activeGoals(){ return S.goals.filter(function(g){ return !!stepOf(g); }); }
 
 /* Answers */
@@ -707,10 +712,11 @@ function earnedList(){
 
 /* Render */
 var draft = null, manual = false, planDays = 7, planning = false, adding = false;
-var wiz = {i:0, level:"new", minutes:15};
-function wizSteps(){ return manual ? ["goal","step","partly"] : ["goal","why","level","days","partly"]; }
+var wiz = {i:0, level:"new", minutes:15, kind:"goal"};
+function wizSteps(){ return manual ? ["goal","step","partly"] : ["goal","kind","why","level","days","partly"]; }
+var GOAL_DAYS = [7,14,21,30,60,90], HABIT_DAYS = [7,14,21,30];
 function resetWiz(){
-  wiz = {i:0, level:"new", minutes:15}; planDays = 7; manual = false;
+  wiz = {i:0, level:"new", minutes:15, kind:"goal"}; planDays = 7; manual = false;
   ["newgoal","newwhy","newstep","newpartly"].forEach(function(id){ $(id).value = ""; });
   showErr("");
 }
@@ -726,7 +732,13 @@ function renderForm(){
   $("makeplan").textContent = last ? (manual ? "Add goal" : (planning ? "Making your plan..." : "Make my plan")) : "Next";
   $("makeplan").disabled = planning;
   $("manualtoggle").textContent = manual ? "Make a plan for me instead" : "I'll write my own daily step";
-  Array.prototype.forEach.call($("daysel").children, function(b){ b.setAttribute("aria-pressed", +b.dataset.days === planDays); });
+  var opts = wiz.kind === "habit" ? HABIT_DAYS : GOAL_DAYS;
+  if(opts.indexOf(planDays) < 0) planDays = opts.indexOf(14) >= 0 ? 14 : opts[0];
+  $("daysel").innerHTML = opts.map(function(n){ return '<button type="button" data-days="'+n+'" aria-pressed="'+(n === planDays)+'">'+n+' days</button>'; }).join("");
+  $("dayq").textContent = wiz.kind === "habit" ? "How long should the ease-in last?" : "How long should the plan last?";
+  $("dayhint").textContent = wiz.kind === "habit" ? "After this, you keep repeating the same daily step for as long as you like." : "The plan ends on its last day.";
+  Array.prototype.forEach.call($("kindsel").children, function(b){ b.setAttribute("aria-pressed", b.dataset.k === wiz.kind); });
+  $("kindhint").textContent = wiz.kind === "habit" ? "Something you want to keep doing, like drinking water or reading every night. It has no end date." : "Something you want to finish or reach, like running a 5K or learning a skill. It has an end date.";
   Array.prototype.forEach.call($("levelsel").children, function(b){ b.setAttribute("aria-pressed", b.dataset.v === wiz.level); });
   Array.prototype.forEach.call($("minsel").children, function(b){ b.setAttribute("aria-pressed", +b.dataset.m === wiz.minutes); });
 }
@@ -735,7 +747,7 @@ function renderDraft(){
   var d = $("draft");
   if(!draft){ d.classList.add("hidden"); d.innerHTML = ""; return; }
   d.classList.remove("hidden");
-  d.innerHTML = '<h3>'+esc(draft.goal)+'</h3><p class="sub">Here is your '+draft.steps.length+'-day plan. Change any day you like, then save.</p>' +
+  d.innerHTML = '<h3>'+esc(draft.goal)+'</h3><p class="sub">'+(draft.habit ? 'Here is your '+draft.steps.length+'-day ease-in. After day '+draft.steps.length+' you keep repeating the last step every day. Change any day you like, then save.' : 'Here is your '+draft.steps.length+'-day plan. Change any day you like, then save.')+'</p>' +
     '<label class="dl" for="dpartly">What counts as partly?</label><input id="dpartly" class="dp" type="text" maxlength="80" data-p="1" placeholder="Optional" value="'+esc(draft.partly || "").replace(/"/g,"&quot;")+'"><ol>' +
     draft.steps.map(function(s,i){ return '<li><span>Day '+(i+1)+'</span><input type="text" maxlength="80" value="'+esc(s).replace(/"/g,"&quot;")+'" data-d="'+i+'" aria-label="Day '+(i+1)+'"></li>'; }).join("") +
     '</ol><div class="row"><button type="button" data-act="redo">Start over</button><button type="button" class="primary" data-act="save">Save goal</button></div>';
@@ -760,12 +772,12 @@ function renderGoals(){
 
 function makePlan(goal, days, partly, extra){
   planning = true; showErr(""); renderForm();
-  fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days, why:extra.why, level:extra.level, minutes:extra.minutes})})
+  fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days, why:extra.why, level:extra.level, minutes:extra.minutes, habit:!!extra.habit})})
     .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
     .then(function(x){
       planning = false;
       if(x.ok && Array.isArray(x.j.steps) && x.j.steps.length){
-        draft = {goal:goal, steps:x.j.steps.map(String), partly:partly || ""}; showErr("");
+        draft = {goal:goal, steps:x.j.steps.map(String), partly:partly || "", habit:!!extra.habit}; showErr("");
       }else if(x.j && x.j.error === "not_configured"){
         showErr("The plan maker isn't connected yet. You can write your own daily step for now.");
       }else{
@@ -1015,11 +1027,12 @@ $("form").addEventListener("submit", function(e){
     resetWiz(); adding = false; render();
     openVideo(ng.id, "rec");
   }else{
-    makePlan(g, planDays, $("newpartly").value.trim(), {why:$("newwhy").value.trim(), level:wiz.level, minutes:wiz.minutes});
+    makePlan(g, planDays, $("newpartly").value.trim(), {why:$("newwhy").value.trim(), level:wiz.level, minutes:wiz.minutes, habit:wiz.kind === "habit"});
   }
 });
 $("wback").addEventListener("click", function(){ if(wiz.i > 0){ wiz.i--; showErr(""); renderForm(); } });
 $("levelsel").addEventListener("click", function(e){ var b = e.target.closest("button[data-v]"); if(b){ wiz.level = b.dataset.v; renderForm(); } });
+$("kindsel").addEventListener("click", function(e){ var b = e.target.closest("button[data-k]"); if(b){ wiz.kind = b.dataset.k; renderForm(); } });
 $("minsel").addEventListener("click", function(e){ var b = e.target.closest("button[data-m]"); if(b){ wiz.minutes = +b.dataset.m; renderForm(); } });
 $("daysel").addEventListener("click", function(e){
   var b = e.target.closest("button[data-days]"); if(!b) return;
@@ -1037,6 +1050,7 @@ $("draft").addEventListener("click", function(e){
   if(b.dataset.act === "save"){
     var steps = draft.steps.map(function(s){ return String(s).trim() || ("Work on: " + draft.goal); });
     var ng2 = {id:uid(), goal:draft.goal, plan:steps, start:today()};
+    if(draft.habit) ng2.habit = true;
     if(draft.partly && draft.partly.trim()) ng2.partly = draft.partly.trim();
     S.goals.push(ng2);
     draft = null; resetWiz(); adding = false; render();

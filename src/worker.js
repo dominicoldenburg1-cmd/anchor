@@ -276,12 +276,13 @@ async function makePlan(request, env) {
   try { body = await request.json(); } catch (e) { return json({ error: "bad_request" }, 400); }
   const goal = String(body.goal || "").trim().slice(0, 120);
   const days = Number(body.days);
-  if (!goal || !Number.isInteger(days) || days < 3 || days > 30) return json({ error: "bad_request" }, 400);
+  if (!goal || !Number.isInteger(days) || days < 3 || days > 90) return json({ error: "bad_request" }, 400);
 
   const why = String(body.why || "").trim().slice(0, 160);
   const levels = { new: "a complete beginner", some: "someone who has done a little of this before", exp: "already experienced" };
   const level = levels[body.level] || "";
   const minutes = [5, 15, 30, 60].includes(Number(body.minutes)) ? Number(body.minutes) : 20;
+  const habit = body.habit === true;
   const prompt =
     "You are a practical coach. The person's goal: \"" + goal + "\".\n" +
     (why ? "Why it matters to them: \"" + why + "\".\n" : "") +
@@ -289,7 +290,10 @@ async function makePlan(request, env) {
     "They can spend about " + minutes + " minutes a day.\n" +
     "Break it into exactly " + days + " daily steps, one per day, in order. Each step is a small, concrete action " +
     "that fits in about " + minutes + " minutes, builds on the day before, and is written as an instruction (for example " +
-    "\"Read 20 pages of your book\"). Keep each step under 60 characters. Make the last day a short review or wrap-up.\n" +
+    "\"Read 20 pages of your book\"). Keep each step under 60 characters. " +
+    (habit
+      ? "This is an ongoing habit with no end date, not a project. Ease in gradually so it feels doable, and make the final step the steady daily action they will keep repeating after the plan ends (not a wrap-up or review).\n"
+      : "Make the last day a short review or wrap-up.\n") +
     "Reply with JSON only, no other text, in this shape: {\"steps\":[\"...\"]}";
 
   let res;
@@ -297,7 +301,7 @@ async function makePlan(request, env) {
     res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "content-type": "application/json", "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({ model: MODEL, max_tokens: 2000, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 4500, messages: [{ role: "user", content: prompt }] }),
     });
   } catch (e) { return json({ error: "upstream" }, 502); }
   if (!res.ok) return json({ error: "upstream" }, 502);
