@@ -200,6 +200,7 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .sc-g b{font-weight:500;overflow-wrap:anywhere}
 .sc-g span{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
 .wrapbtn{width:100%;border:0;border-radius:18px;padding:16px;margin:0 0 18px;text-align:left;cursor:pointer;color:#fff;background:linear-gradient(135deg,#5B8DEF,#8E7CF0 55%,#E58FB0);display:flex;flex-direction:column;gap:2px}
+.newpill{font-style:normal;font-size:11px;font-weight:700;background:#fff;color:#4A5FD0;padding:2px 8px;border-radius:99px;margin-left:6px;vertical-align:2px}
 .wb-t{font:700 18px var(--body)}
 .wb-s{font:400 13px var(--body);opacity:.9}
 .achcat{margin:0 0 20px}
@@ -1057,7 +1058,7 @@ function updateDot(){
   var earned = earnedList().filter(function(x){ return x.earned; }).map(function(x){ return x.a.t; });
   var fresh = earned.filter(function(t){ return S.seenAch.indexOf(t) < 0; });
   if(tabNow === "ach"){ S.seenAch = earned; fresh = []; }
-  $("achdot").classList.toggle("hidden", fresh.length === 0);
+  $("achdot").classList.toggle("hidden", fresh.length === 0 && !weekNew());
 }
 
 function render(){
@@ -1389,8 +1390,9 @@ function dayBest(){
   S.log.forEach(function(e){ var k = ymd(new Date(e.ts)); if(!m[k] || (rank[e.answer] || 0) > rank[m[k]]) m[k] = e.answer; });
   return m;
 }
-function overallStreak(m){
-  var n = dayNum(today()); if(!counts(m[keyFromNum(n)])) n -= 1;
+function overallStreak(m, endN){
+  var n = endN !== undefined ? endN : dayNum(today());
+  if(endN === undefined && !counts(m[keyFromNum(n)])) n -= 1;
   var c = 0; while(counts(m[keyFromNum(n)])){ c++; n -= 1; } return c;
 }
 function overallBest(m){
@@ -1414,6 +1416,8 @@ function renderAch(){
   var list = earnedList(), n = list.filter(function(x){ return x.earned; }).length;
   $("achsum").textContent = n + " of " + list.length + " earned";
   renderStreak();
+  var wn = weekNew();
+  $("wrapbtn").innerHTML = '<span class="wb-t">Your week in review'+(wn ? ' <em class="newpill">New</em>' : '')+'</span><span class="wb-s">'+(wn ? 'Your week of '+weekReport().range+' is ready' : 'Drops every Sunday at midnight. Tap to see last week again.')+'</span>';
   $("achcats").innerHTML = CATS.map(function(c){
     var items = list.filter(function(x){ return x.a.cat === c.k; }), e = items.filter(function(x){ return x.earned; }).length;
     return '<section class="achcat"><h2>'+c.t+'<span>'+e+' of '+items.length+'</span></h2><ul class="ach">' + items.map(function(x){
@@ -1514,10 +1518,21 @@ function shareAchievement(title){
 }
 
 /* Week in review */
+/* The review covers the last full week, Sunday to Saturday, and drops at midnight when Sunday starts. */
+function weekWindow(){
+  var t = dayNum(today()), dow = new Date().getDay();
+  var sat = t - (dow + 1), start = sat - 6, sp = keyFromNum(start).split("-"), ep = keyFromNum(sat + 1).split("-");
+  return {start:start, sat:sat, key:keyFromNum(start),
+    startMs:new Date(+sp[0], +sp[1]-1, +sp[2]).getTime(), endMs:new Date(+ep[0], +ep[1]-1, +ep[2]).getTime()};
+}
+function wrSeen(){ try{ return localStorage.getItem("anchor-wrseen"); }catch(e){ return null; } }
+function weekNew(){
+  var w = weekWindow();
+  return wrSeen() !== w.key && S.log.some(function(e){ return e.ts >= w.startMs && e.ts < w.endMs; });
+}
 function weekReport(){
-  var t = dayNum(today()), start = t - 6, startKey = keyFromNum(start), sp = startKey.split("-");
-  var startMs = new Date(+sp[0], +sp[1]-1, +sp[2]).getTime();
-  var ents = S.log.filter(function(e){ return e.ts >= startMs; });
+  var w = weekWindow(), start = w.start, startMs = w.startMs;
+  var ents = S.log.filter(function(e){ return e.ts >= startMs && e.ts < w.endMs; });
   var cnt = {Yes:0, Partly:0, No:0}, sum = 0;
   ents.forEach(function(e){ if(e.answer in cnt) cnt[e.answer]++; sum += score(e.answer); });
   var m = dayBest(), days = [], i;
@@ -1531,25 +1546,25 @@ function weekReport(){
     return {name:g.goal, n:es.length, yes:y, avg:es.length ? s / es.length : 0};
   }).filter(function(x){ return x.n > 0; }).sort(function(a,b){ return b.avg - a.avg || b.n - a.n; });
   var dt = achDates({goals:S.goals, log:S.log});
-  var got = ACH.filter(function(a){ return dt[a.t] >= startMs; });
-  var sd = new Date(+sp[0], +sp[1]-1, +sp[2]), fmt = {month:"short", day:"numeric"};
+  var got = ACH.filter(function(a){ return dt[a.t] >= startMs && dt[a.t] < w.endMs; });
+  var sp = keyFromNum(start).split("-"), ep = keyFromNum(w.sat).split("-"), fmt = {month:"short", day:"numeric"};
   return {count:ents.length, cnt:cnt, pct:ents.length ? Math.round(sum / ents.length * 100) : 0, days:days,
-    daysActive:days.filter(function(d){ return d.a; }).length, streak:overallStreak(m), best:overallBest(m),
+    daysActive:days.filter(function(d){ return d.a; }).length, streak:overallStreak(m, w.sat), best:overallBest(m),
     goals:perGoal, top:perGoal[0] || null, ach:got,
-    range:sd.toLocaleDateString(undefined, fmt) + " to " + new Date().toLocaleDateString(undefined, fmt)};
+    range:new Date(+sp[0], +sp[1]-1, +sp[2]).toLocaleDateString(undefined, fmt) + " to " + new Date(+ep[0], +ep[1]-1, +ep[2]).toLocaleDateString(undefined, fmt)};
 }
 var WR = {r:null, i:0, n:0};
 function wrSlides(r){
-  if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins yet this week</h2><p>Answer your daily check-ins and your week in review shows up here.</p>'];
+  if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins that week</h2><p>Check in during the week and your review drops every Sunday at midnight.</p>'];
   var tier = r.pct >= 80 ? "You were locked in." : r.pct >= 50 ? "Solid momentum." : "A fresh start is always one day away.";
   var out = [];
   out.push('<p class="wr-k">Your week in review</p><p>'+r.range+'</p><p>You checked in</p><div class="wr-big">'+r.count+'</div><p>times across '+r.daysActive+' of 7 days</p><div class="wr-days">'+r.days.map(function(d){ return '<span><i class="hd '+d.a+'"></i>'+d.letter+'</span>'; }).join("")+'</div>');
-  out.push('<h2>'+tier+'</h2><p>'+r.pct+'% completion this week</p>' + ["Yes","Partly","No"].map(function(a){ return '<div class="wr-bar"><span>'+a+'</span><div><i style="width:'+Math.round(r.cnt[a] / r.count * 100)+'%"></i></div><b>'+r.cnt[a]+'</b></div>'; }).join(""));
+  out.push('<h2>'+tier+'</h2><p>'+r.pct+'% completion that week</p>' + ["Yes","Partly","No"].map(function(a){ return '<div class="wr-bar"><span>'+a+'</span><div><i style="width:'+Math.round(r.cnt[a] / r.count * 100)+'%"></i></div><b>'+r.cnt[a]+'</b></div>'; }).join(""));
   out.push(r.top ? '<p class="wr-k">Your top goal</p><h2>'+esc(r.top.name)+'</h2><p>'+r.top.yes+' Yes out of '+r.top.n+' check-ins</p>' + (r.goals.length > 1 ? '<div class="wr-list">'+r.goals.slice(1).map(function(g){ return '<div>'+esc(g.name)+'<small>'+Math.round(g.avg * 100)+'% completion</small></div>'; }).join("")+'</div>' : '') : '<h2>Keep going</h2>');
-  out.push('<div class="wr-flame">'+ICON.flame+'</div><div class="wr-big">'+r.streak+'</div><p>'+(r.streak === 1 ? "day" : "days")+' in a row right now</p><p>Your best is '+r.best+'.</p>');
-  out.push(r.ach.length ? '<p class="wr-k">New this week</p><h2>'+r.ach.length+(r.ach.length === 1 ? ' achievement' : ' achievements')+'</h2><div class="wr-list">'+r.ach.map(function(a){ return '<div>'+a.t+'<small>'+a.d+'</small></div>'; }).join("")+'</div>' : (function(){
+  out.push('<div class="wr-flame">'+ICON.flame+'</div><div class="wr-big">'+r.streak+'</div><p>'+(r.streak === 1 ? "day" : "days")+' in a row to end the week</p><p>Your best is '+r.best+'.</p>');
+  out.push(r.ach.length ? '<p class="wr-k">New that week</p><h2>'+r.ach.length+(r.ach.length === 1 ? ' achievement' : ' achievements')+'</h2><div class="wr-list">'+r.ach.map(function(a){ return '<div>'+a.t+'<small>'+a.d+'</small></div>'; }).join("")+'</div>' : (function(){
     var nx = earnedList().filter(function(x){ return !x.earned; }).sort(function(a,b){ return b.v / b.a.n - a.v / a.a.n; })[0];
-    return '<h2>No new achievements this week</h2>' + (nx ? '<p>Closest: '+nx.a.t+' ('+nx.v+' of '+nx.a.n+')</p>' : '');
+    return '<h2>No new achievements that week</h2>' + (nx ? '<p>Closest: '+nx.a.t+' ('+nx.v+' of '+nx.a.n+')</p>' : '');
   })());
   out.push('<h2>Share your week</h2><canvas class="wr-prev" id="wrprev"></canvas><button type="button" class="wr-go" id="wrgo">Share</button>');
   return out;
@@ -1564,6 +1579,8 @@ function drawWr(){
 }
 function openWrapped(){
   WR.r = weekReport(); WR.slides = wrSlides(WR.r); WR.i = 0;
+  try{ localStorage.setItem("anchor-wrseen", weekWindow().key); }catch(e){}
+  renderAch(); updateDot();
   $("wrapped").classList.remove("hidden"); drawWr();
 }
 function shareWeek(){ shareCanvas(weekCard(WR.r), "anchor-my-week.png", "My week on Anchor: " + WR.r.count + " check-ins, " + WR.r.pct + "% completion."); }
