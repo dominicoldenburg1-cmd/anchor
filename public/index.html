@@ -1417,7 +1417,7 @@ function renderAch(){
   $("achsum").textContent = n + " of " + list.length + " earned";
   renderStreak();
   var wn = weekNew();
-  $("wrapbtn").innerHTML = '<span class="wb-t">Your week in review'+(wn ? ' <em class="newpill">New</em>' : '')+'</span><span class="wb-s">'+(wn ? 'Your week of '+weekReport().range+' is ready' : 'Drops every Sunday at midnight. Tap to see last week again.')+'</span>';
+  $("wrapbtn").innerHTML = '<span class="wb-t">Your week in review'+(wn ? ' <em class="newpill">New</em>' : '')+'</span><span class="wb-s">'+(wn ? 'Your week of '+weekReport().range+' is ready' : 'Drops every Sunday at noon. Tap to see last week again.')+'</span>';
   $("achcats").innerHTML = CATS.map(function(c){
     var items = list.filter(function(x){ return x.a.cat === c.k; }), e = items.filter(function(x){ return x.earned; }).length;
     return '<section class="achcat"><h2>'+c.t+'<span>'+e+' of '+items.length+'</span></h2><ul class="ach">' + items.map(function(x){
@@ -1518,10 +1518,11 @@ function shareAchievement(title){
 }
 
 /* Week in review */
-/* The review covers the last full week, Sunday to Saturday, and drops at midnight when Sunday starts. */
+/* The review covers the last full week, Sunday to Saturday night, and drops at noon on Sunday. */
 function weekWindow(){
-  var t = dayNum(today()), dow = new Date().getDay();
-  var sat = t - (dow + 1), start = sat - 6, sp = keyFromNum(start).split("-"), ep = keyFromNum(sat + 1).split("-");
+  var t = dayNum(today()), now = new Date(), dow = now.getDay();
+  var drop = (dow === 0 && now.getHours() >= 12) ? t : t - (dow === 0 ? 7 : dow);   // most recent Sunday noon
+  var sat = drop - 1, start = drop - 7, sp = keyFromNum(start).split("-"), ep = keyFromNum(sat + 1).split("-");
   return {start:start, sat:sat, key:keyFromNum(start),
     startMs:new Date(+sp[0], +sp[1]-1, +sp[2]).getTime(), endMs:new Date(+ep[0], +ep[1]-1, +ep[2]).getTime()};
 }
@@ -1555,7 +1556,7 @@ function weekReport(){
 }
 var WR = {r:null, i:0, n:0};
 function wrSlides(r){
-  if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins that week</h2><p>Check in during the week and your review drops every Sunday at midnight.</p>'];
+  if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins that week</h2><p>Check in during the week and your review drops every Sunday at noon.</p>'];
   var tier = r.pct >= 80 ? "You were locked in." : r.pct >= 50 ? "Solid momentum." : "A fresh start is always one day away.";
   var out = [];
   out.push('<p class="wr-k">Your week in review</p><p>'+r.range+'</p><p>You checked in</p><div class="wr-big">'+r.count+'</div><p>times across '+r.daysActive+' of 7 days</p><div class="wr-days">'+r.days.map(function(d){ return '<span><i class="hd '+d.a+'"></i>'+d.letter+'</span>'; }).join("")+'</div>');
