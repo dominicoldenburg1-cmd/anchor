@@ -181,6 +181,58 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .ach .txt .bar{margin-top:8px}
 .ach .txt em{font-style:normal;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:4px}
 .ach li.earned .txt em{color:var(--done);font-weight:700}
+.streakcard{background:var(--card);border-radius:20px;padding:16px;margin:0 0 12px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.sc-top{display:flex;align-items:center;gap:12px}
+.sc-flame{width:48px;height:48px;border-radius:50%;background:var(--warn);color:#fff;display:grid;place-items:center;flex:none}
+.sc-flame.off{background:var(--chip);color:var(--faint)}
+.sc-flame svg{width:26px;height:26px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sc-top>div:nth-child(2){flex:1}
+.sc-num{display:block;font:700 34px var(--display);line-height:1;font-variant-numeric:tabular-nums}
+.sc-top span{font-size:13px;color:var(--muted)}
+.sc-best{text-align:right}
+.sc-best b{display:block;font:700 22px var(--display);font-variant-numeric:tabular-nums}
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:14px 0 4px;justify-items:center}
+.heat .hd{width:100%;max-width:30px;aspect-ratio:1;height:auto}
+.sc-cap{font-size:11px;color:var(--muted);margin:0 0 4px}
+.sc-goals{margin-top:8px;border-top:1px solid var(--line)}
+.sc-g{display:flex;justify-content:space-between;gap:10px;padding:9px 0;font-size:14px;border-bottom:1px solid var(--line)}
+.sc-g:last-child{border-bottom:0;padding-bottom:0}
+.sc-g b{font-weight:500;overflow-wrap:anywhere}
+.sc-g span{color:var(--muted);flex:none;font-variant-numeric:tabular-nums}
+.wrapbtn{width:100%;border:0;border-radius:18px;padding:16px;margin:0 0 18px;text-align:left;cursor:pointer;color:#fff;background:linear-gradient(135deg,#5B8DEF,#8E7CF0 55%,#E58FB0);display:flex;flex-direction:column;gap:2px}
+.wb-t{font:700 18px var(--body)}
+.wb-s{font:400 13px var(--body);opacity:.9}
+.achcat{margin:0 0 20px}
+.achcat h2{display:flex;justify-content:space-between;align-items:baseline;font:700 13px var(--body);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+.achcat h2 span{font-weight:500;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.ach li .shbtn{align-self:center;flex:none;border:1px solid var(--line);background:var(--bg);color:var(--accent-text);font:600 13px var(--body);padding:8px 12px;border-radius:10px;cursor:pointer}
+.wrapped{position:absolute;inset:0;z-index:40;color:#fff;background:linear-gradient(160deg,#4A78DC 0%,#7A68E0 55%,#D77AA2 100%);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 14px) 20px calc(env(safe-area-inset-bottom) + 20px)}
+.wr-bars{display:flex;gap:4px}
+.wr-bars i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35);display:block}
+.wr-bars i.on{background:#fff}
+.wr-top{display:flex;justify-content:space-between;align-items:center;margin:10px 0 0}
+.wr-btn{border:0;background:rgba(255,255,255,.22);color:#fff;font:600 15px var(--body);padding:8px 14px;border-radius:99px;cursor:pointer}
+.wr-slide{flex:1;display:flex;flex-direction:column;justify-content:center;gap:12px;min-height:0;overflow-y:auto;text-align:center;align-items:center}
+.wr-slide h2{font:700 34px var(--display);margin:0;line-height:1.15}
+.wr-slide p{margin:0;font-size:17px;opacity:.92}
+.wr-k{font-size:13px!important;letter-spacing:.1em;text-transform:uppercase;opacity:.8!important}
+.wr-big{font:700 120px var(--display);line-height:1;font-variant-numeric:tabular-nums}
+.wr-days{display:flex;gap:8px;margin-top:8px}
+.wr-days span{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;opacity:.95}
+.wr-days .hd{width:28px;height:28px;border-color:rgba(255,255,255,.55)}
+.wr-days .hd.Yes{background:#2FB47E;border-color:#2FB47E}
+.wr-days .hd.Partly{background:#F0A63A;border-color:#F0A63A}
+.wr-days .hd.No{background:#E5675D;border-color:#E5675D}
+.wr-bar{width:100%;max-width:320px;display:grid;grid-template-columns:60px 1fr 32px;align-items:center;gap:10px;font-size:15px;text-align:left}
+.wr-bar div{height:12px;border-radius:6px;background:rgba(255,255,255,.25);overflow:hidden}
+.wr-bar i{display:block;height:100%;background:#fff;border-radius:6px}
+.wr-bar b{text-align:right;font-variant-numeric:tabular-nums}
+.wr-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;margin-top:6px}
+.wr-list div{background:rgba(255,255,255,.18);border-radius:14px;padding:11px 14px;text-align:left;font-size:15px}
+.wr-list small{display:block;opacity:.85;font-size:12px}
+.wr-flame svg{width:72px;height:72px;stroke:#fff;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wr-prev{width:100%;max-width:260px;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.wr-go{border:0;background:#fff;color:#2D4FA8;font:700 17px var(--body);padding:14px 30px;border-radius:14px;cursor:pointer}
 .addbtn{width:100%;border:0;background:var(--accent);color:#fff;font:700 17px var(--body);border-radius:14px;padding:14px 16px;min-height:72px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .addbtn span{font-size:26px;line-height:1;font-weight:500}
 .addbtn:active{transform:scale(.99)}
@@ -455,8 +507,9 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
   <main class="screen hidden" id="screen-ach">
     <p class="eyebrow" id="achsum"></p>
     <h1>Achievements</h1>
-    <p class="sub">Earned by checking in on your daily steps.</p>
-    <ul class="ach" id="achlist"></ul>
+    <div class="streakcard" id="streakcard"></div>
+    <button type="button" class="wrapbtn" id="wrapbtn"><span class="wb-t">Your week in review</span><span class="wb-s">See your week and share it</span></button>
+    <div id="achcats"></div>
   </main>
 
   <main class="screen hidden" id="screen-history">
@@ -537,6 +590,12 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <p class="vid-msg hidden" id="vidmsg" role="alert"></p>
     <div class="vid-actions" id="vidactions"></div>
     <input type="file" accept="video/*" capture="user" id="vidfile" class="hidden">
+  </div>
+
+  <div class="wrapped hidden" id="wrapped" role="dialog" aria-modal="true" aria-label="Your week in review">
+    <div class="wr-bars" id="wrbars"></div>
+    <div class="wr-top"><button type="button" class="wr-btn" id="wrshare">Share</button><button type="button" class="wr-btn" id="wrclose" aria-label="Close">&times;</button></div>
+    <div class="wr-slide" id="wrslide"></div>
   </div>
 
   <div class="acctpanel hidden" id="fview" style="z-index:30" role="dialog" aria-modal="true" aria-label="Friend profile">
@@ -694,6 +753,11 @@ var ACH = [
   {t:"Yes machine", d:"Answer Yes 50 times", n:50, icon:"star", v:function(s){return s.yes;}},
   {t:"Century", d:"Check in 100 times", n:100, icon:"chat", v:function(s){return s.answers;}}
 ];
+var ACHCAT = {"First check-in":"checkins","Habit forming":"checkins","Century":"checkins","Early bird":"checkins",
+  "Three days running":"streaks","One week strong":"streaks","Two weeks strong":"streaks","Month strong":"streaks","Comeback":"streaks",
+  "Full effort":"effort","Perfect day":"effort","Yes machine":"effort"};
+var CATS = [{k:"checkins", t:"Check-ins"},{k:"streaks", t:"Streaks"},{k:"effort", t:"Effort"}];
+ACH.forEach(function(a){ a.cat = ACHCAT[a.t] || "effort"; });
 function stats(){
   var yes = 0, days = {}, gids = {};
   S.log.forEach(function(e){ if(e.answer === "Yes") yes++; days[ymd(new Date(e.ts))] = 1; gids[e.gid] = 1; });
@@ -987,16 +1051,6 @@ function renderToday(){
   }).join("") : '<div class="empty">Nothing here yet. <button class="linkbtn" data-go="goals" type="button">Add a goal</button></div>';
 
   renderWidget();
-}
-
-function renderAch(){
-  var list = earnedList(), n = list.filter(function(x){ return x.earned; }).length;
-  $("achsum").textContent = n + " of " + list.length + " earned";
-  $("achlist").innerHTML = list.map(function(x){
-    var pct = Math.round(x.v / x.a.n * 100);
-    return '<li class="'+(x.earned?'earned':'')+'"><span class="medal">'+ICON[x.a.icon]+'</span><div class="txt"><b>'+x.a.t+'</b><span>'+x.a.d+'</span>' +
-      (x.earned ? '<em>Earned</em>' : '<div class="bar small"><i style="width:'+pct+'%"></i></div><em>'+x.v+' of '+x.a.n+'</em>') + '</div></li>';
-  }).join("");
 }
 
 function updateDot(){
@@ -1328,6 +1382,202 @@ document.querySelector(".tabs").addEventListener("click", function(e){
 });
 document.addEventListener("visibilitychange", function(){ if(!document.hidden){ render(); if(tabNow === "social") loadFeed(); } });
 
+
+/* Streaks, week in review, sharing */
+function dayBest(){
+  var m = {}, rank = {Yes:3, Partly:2, No:1};
+  S.log.forEach(function(e){ var k = ymd(new Date(e.ts)); if(!m[k] || (rank[e.answer] || 0) > rank[m[k]]) m[k] = e.answer; });
+  return m;
+}
+function overallStreak(m){
+  var n = dayNum(today()); if(!counts(m[keyFromNum(n)])) n -= 1;
+  var c = 0; while(counts(m[keyFromNum(n)])){ c++; n -= 1; } return c;
+}
+function overallBest(m){
+  var ds = Object.keys(m).filter(function(k){ return counts(m[k]); }).map(dayNum).sort(function(a,b){ return a-b; });
+  var best = 0, run = 0, prev = null;
+  ds.forEach(function(d){ run = (prev !== null && d === prev + 1) ? run + 1 : 1; if(run > best) best = run; prev = d; });
+  return best;
+}
+function renderStreak(){
+  var m = dayBest(), cur = overallStreak(m), best = overallBest(m), t = dayNum(today()), dots = "";
+  for(var i = 27; i >= 0; i--){ var k = keyFromNum(t - i), a = m[k] || ""; dots += '<i class="hd '+a+'" title="'+k+(a ? ": " + a : "")+'"></i>'; }
+  var goals = S.goals.map(function(g){
+    var c = streak(g.id), b = bestStreak(g.id);
+    return '<div class="sc-g"><b>'+esc(g.goal)+'</b><span>'+c+(c === 1 ? " day" : " days")+' &middot; best '+b+'</span></div>';
+  }).join("");
+  $("streakcard").innerHTML = '<div class="sc-top"><div class="sc-flame'+(cur ? '' : ' off')+'">'+ICON.flame+'</div><div><b class="sc-num">'+cur+'</b><span>'+(cur ? (cur === 1 ? "day streak" : "day streak") : "Check in today to start a streak")+'</span></div><div class="sc-best"><b>'+best+'</b><span>best</span></div></div>' +
+    '<div class="heat" aria-label="Last 28 days">'+dots+'</div><p class="sc-cap">Last 4 weeks, oldest first. Today is the last dot.</p>' +
+    (goals ? '<div class="sc-goals">'+goals+'</div>' : '');
+}
+function renderAch(){
+  var list = earnedList(), n = list.filter(function(x){ return x.earned; }).length;
+  $("achsum").textContent = n + " of " + list.length + " earned";
+  renderStreak();
+  $("achcats").innerHTML = CATS.map(function(c){
+    var items = list.filter(function(x){ return x.a.cat === c.k; }), e = items.filter(function(x){ return x.earned; }).length;
+    return '<section class="achcat"><h2>'+c.t+'<span>'+e+' of '+items.length+'</span></h2><ul class="ach">' + items.map(function(x){
+      var pct = Math.round(x.v / x.a.n * 100);
+      return '<li class="'+(x.earned?'earned':'')+'"><span class="medal">'+ICON[x.a.icon]+'</span><div class="txt"><b>'+x.a.t+'</b><span>'+x.a.d+'</span>' +
+        (x.earned ? '<em>Earned</em>' : '<div class="bar small"><i style="width:'+pct+'%"></i></div><em>'+x.v+' of '+x.a.n+'</em>') + '</div>' +
+        (x.earned ? '<button type="button" class="shbtn" data-share="'+esc(x.a.t)+'">Share</button>' : '') + '</li>';
+    }).join("") + '</ul></section>';
+  }).join("");
+}
+
+/* Images for sharing */
+var ICONIMG = {};
+function preloadIcons(){
+  Object.keys(ICON).forEach(function(k){
+    var svg = ICON[k].replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ');
+    var im = new Image(); im.onload = function(){ ICONIMG[k] = im; };
+    im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  });
+}
+preloadIcons();
+var CF_BODY = '"DM Sans", system-ui, -apple-system, sans-serif', CF_DISP = 'Fraunces, Georgia, serif';
+function cardBase(){
+  var cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1350;
+  var c = cv.getContext("2d"), g = c.createLinearGradient(0, 0, 1080, 1350);
+  g.addColorStop(0, "#4A78DC"); g.addColorStop(.55, "#7A68E0"); g.addColorStop(1, "#D77AA2");
+  c.fillStyle = g; c.fillRect(0, 0, 1080, 1350);
+  c.fillStyle = "rgba(255,255,255,.9)"; c.textAlign = "left"; c.font = "700 40px " + CF_BODY;
+  c.fillText("ANCHOR", 70, 110);
+  c.textAlign = "center"; c.fillStyle = "rgba(255,255,255,.8)"; c.font = "500 34px " + CF_BODY;
+  c.fillText("Tracked with Anchor", 540, 1275);
+  return {cv:cv, c:c};
+}
+function wrapLines(c, text, maxW, maxLines){
+  var words = String(text).split(/\s+/), line = "", lines = [];
+  words.forEach(function(w){
+    var t = line ? line + " " + w : w;
+    if(c.measureText(t).width > maxW && line){ lines.push(line); line = w; } else line = t;
+  });
+  if(line) lines.push(line);
+  if(lines.length > maxLines){ lines = lines.slice(0, maxLines); lines[maxLines-1] = lines[maxLines-1].replace(/\s*\S*$/, "") + "..."; }
+  return lines;
+}
+function drawLines(c, lines, x, y, lh){ lines.forEach(function(l, i){ c.fillText(l, x, y + i * lh); }); return y + lines.length * lh; }
+function who(){ var p = S.profile || {}; return (p.name || USER || "").trim(); }
+function achievementCard(a, ts){
+  var b = cardBase(), c = b.c;
+  c.fillStyle = "rgba(255,255,255,.2)"; c.beginPath(); c.arc(540, 500, 210, 0, Math.PI * 2); c.fill();
+  var im = ICONIMG[a.icon]; if(im) c.drawImage(im, 420, 380, 240, 240);
+  c.textAlign = "center"; c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 40px " + CF_BODY;
+  c.fillText(who() ? who() + " earned" : "Achievement earned", 540, 830);
+  c.fillStyle = "#fff"; c.font = "700 104px " + CF_DISP;
+  var y = drawLines(c, wrapLines(c, a.t, 900, 2), 540, 950, 118);
+  c.fillStyle = "rgba(255,255,255,.88)"; c.font = "400 40px " + CF_BODY;
+  y = drawLines(c, wrapLines(c, a.d, 860, 2), 540, y + 20, 56);
+  if(ts){ c.font = "500 34px " + CF_BODY; c.fillStyle = "rgba(255,255,255,.75)"; c.fillText(new Date(ts).toLocaleDateString(undefined,{month:"long",day:"numeric",year:"numeric"}), 540, y + 30); }
+  return b.cv;
+}
+function weekCard(r){
+  var b = cardBase(), c = b.c;
+  c.textAlign = "center"; c.fillStyle = "#fff"; c.font = "700 96px " + CF_DISP;
+  c.fillText(who() ? who() + "'s week" : "My week", 540, 270);
+  c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 38px " + CF_BODY; c.fillText(r.range, 540, 335);
+  c.fillStyle = "#fff"; c.font = "700 270px " + CF_DISP; c.fillText(String(r.count), 540, 640);
+  c.fillStyle = "rgba(255,255,255,.9)"; c.font = "500 44px " + CF_BODY; c.fillText(r.count === 1 ? "check-in" : "check-ins", 540, 710);
+  var col = {Yes:"#2FB47E", Partly:"#F0A63A", No:"#E5675D"};
+  r.days.forEach(function(d, i){
+    var x = 540 + (i - 3) * 118;
+    c.beginPath(); c.arc(x, 820, 36, 0, Math.PI * 2);
+    if(d.a){ c.fillStyle = col[d.a]; c.fill(); } else { c.lineWidth = 5; c.strokeStyle = "rgba(255,255,255,.6)"; c.stroke(); }
+    c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 28px " + CF_BODY; c.fillText(d.letter, x, 900);
+  });
+  var stats3 = [[r.pct + "%", "completion"], [r.daysActive + "/7", "days active"], [String(r.streak), "day streak"]];
+  stats3.forEach(function(s, i){
+    var x = 240 + i * 300;
+    c.fillStyle = "#fff"; c.font = "700 84px " + CF_DISP; c.fillText(s[0], x, 1060);
+    c.fillStyle = "rgba(255,255,255,.85)"; c.font = "500 32px " + CF_BODY; c.fillText(s[1], x, 1110);
+  });
+  if(r.top){ c.fillStyle = "rgba(255,255,255,.9)"; c.font = "500 38px " + CF_BODY; c.fillText(wrapLines(c, "Top goal: " + r.top.name, 900, 1)[0], 540, 1200); }
+  return b.cv;
+}
+function shareCanvas(cv, fname, text){
+  cv.toBlob(function(blob){
+    if(!blob) return;
+    var file = null; try{ file = new File([blob], fname, {type:"image/png"}); }catch(e){}
+    if(file && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], text:text}).catch(function(){});
+    }else{
+      var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fname;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    }
+  }, "image/png");
+}
+function shareAchievement(title){
+  var a = ACH.filter(function(x){ return x.t === title; })[0]; if(!a) return;
+  var dt = achDates({goals:S.goals, log:S.log});
+  shareCanvas(achievementCard(a, dt[a.t]), "anchor-" + a.t.toLowerCase().replace(/[^a-z0-9]+/g, "-") + ".png", "I just earned “" + a.t + "” on Anchor.");
+}
+
+/* Week in review */
+function weekReport(){
+  var t = dayNum(today()), start = t - 6, startKey = keyFromNum(start), sp = startKey.split("-");
+  var startMs = new Date(+sp[0], +sp[1]-1, +sp[2]).getTime();
+  var ents = S.log.filter(function(e){ return e.ts >= startMs; });
+  var cnt = {Yes:0, Partly:0, No:0}, sum = 0;
+  ents.forEach(function(e){ if(e.answer in cnt) cnt[e.answer]++; sum += score(e.answer); });
+  var m = dayBest(), days = [], i;
+  for(i = 0; i < 7; i++){
+    var k = keyFromNum(start + i), q = k.split("-"), d = new Date(+q[0], +q[1]-1, +q[2]);
+    days.push({a:m[k] || "", letter:d.toLocaleDateString(undefined,{weekday:"narrow"}), label:d.toLocaleDateString(undefined,{weekday:"short"})});
+  }
+  var perGoal = S.goals.map(function(g){
+    var es = ents.filter(function(e){ return e.gid === g.id; }), s = 0, y = 0;
+    es.forEach(function(e){ s += score(e.answer); if(e.answer === "Yes") y++; });
+    return {name:g.goal, n:es.length, yes:y, avg:es.length ? s / es.length : 0};
+  }).filter(function(x){ return x.n > 0; }).sort(function(a,b){ return b.avg - a.avg || b.n - a.n; });
+  var dt = achDates({goals:S.goals, log:S.log});
+  var got = ACH.filter(function(a){ return dt[a.t] >= startMs; });
+  var sd = new Date(+sp[0], +sp[1]-1, +sp[2]), fmt = {month:"short", day:"numeric"};
+  return {count:ents.length, cnt:cnt, pct:ents.length ? Math.round(sum / ents.length * 100) : 0, days:days,
+    daysActive:days.filter(function(d){ return d.a; }).length, streak:overallStreak(m), best:overallBest(m),
+    goals:perGoal, top:perGoal[0] || null, ach:got,
+    range:sd.toLocaleDateString(undefined, fmt) + " to " + new Date().toLocaleDateString(undefined, fmt)};
+}
+var WR = {r:null, i:0, n:0};
+function wrSlides(r){
+  if(!r.count) return ['<p class="wr-k">Your week in review</p><h2>No check-ins yet this week</h2><p>Answer your daily check-ins and your week in review shows up here.</p>'];
+  var tier = r.pct >= 80 ? "You were locked in." : r.pct >= 50 ? "Solid momentum." : "A fresh start is always one day away.";
+  var out = [];
+  out.push('<p class="wr-k">Your week in review</p><p>'+r.range+'</p><p>You checked in</p><div class="wr-big">'+r.count+'</div><p>times across '+r.daysActive+' of 7 days</p><div class="wr-days">'+r.days.map(function(d){ return '<span><i class="hd '+d.a+'"></i>'+d.letter+'</span>'; }).join("")+'</div>');
+  out.push('<h2>'+tier+'</h2><p>'+r.pct+'% completion this week</p>' + ["Yes","Partly","No"].map(function(a){ return '<div class="wr-bar"><span>'+a+'</span><div><i style="width:'+Math.round(r.cnt[a] / r.count * 100)+'%"></i></div><b>'+r.cnt[a]+'</b></div>'; }).join(""));
+  out.push(r.top ? '<p class="wr-k">Your top goal</p><h2>'+esc(r.top.name)+'</h2><p>'+r.top.yes+' Yes out of '+r.top.n+' check-ins</p>' + (r.goals.length > 1 ? '<div class="wr-list">'+r.goals.slice(1).map(function(g){ return '<div>'+esc(g.name)+'<small>'+Math.round(g.avg * 100)+'% completion</small></div>'; }).join("")+'</div>' : '') : '<h2>Keep going</h2>');
+  out.push('<div class="wr-flame">'+ICON.flame+'</div><div class="wr-big">'+r.streak+'</div><p>'+(r.streak === 1 ? "day" : "days")+' in a row right now</p><p>Your best is '+r.best+'.</p>');
+  out.push(r.ach.length ? '<p class="wr-k">New this week</p><h2>'+r.ach.length+(r.ach.length === 1 ? ' achievement' : ' achievements')+'</h2><div class="wr-list">'+r.ach.map(function(a){ return '<div>'+a.t+'<small>'+a.d+'</small></div>'; }).join("")+'</div>' : (function(){
+    var nx = earnedList().filter(function(x){ return !x.earned; }).sort(function(a,b){ return b.v / b.a.n - a.v / a.a.n; })[0];
+    return '<h2>No new achievements this week</h2>' + (nx ? '<p>Closest: '+nx.a.t+' ('+nx.v+' of '+nx.a.n+')</p>' : '');
+  })());
+  out.push('<h2>Share your week</h2><canvas class="wr-prev" id="wrprev"></canvas><button type="button" class="wr-go" id="wrgo">Share</button>');
+  return out;
+}
+function drawWr(){
+  var sl = WR.slides, i = WR.i;
+  $("wrbars").innerHTML = sl.map(function(_, j){ return '<i class="'+(j <= i ? "on" : "")+'"></i>'; }).join("");
+  $("wrslide").innerHTML = sl[i];
+  $("wrshare").classList.toggle("hidden", !WR.r.count);
+  var pv = $("wrprev");
+  if(pv){ var cv = weekCard(WR.r); pv.width = 540; pv.height = 675; pv.getContext("2d").drawImage(cv, 0, 0, 540, 675); }
+}
+function openWrapped(){
+  WR.r = weekReport(); WR.slides = wrSlides(WR.r); WR.i = 0;
+  $("wrapped").classList.remove("hidden"); drawWr();
+}
+function shareWeek(){ shareCanvas(weekCard(WR.r), "anchor-my-week.png", "My week on Anchor: " + WR.r.count + " check-ins, " + WR.r.pct + "% completion."); }
+$("wrapbtn").addEventListener("click", openWrapped);
+$("wrclose").addEventListener("click", function(){ $("wrapped").classList.add("hidden"); });
+$("wrshare").addEventListener("click", shareWeek);
+$("wrapped").addEventListener("click", function(e){
+  if(e.target.closest("button")){ if(e.target.id === "wrgo") shareWeek(); return; }
+  var x = e.clientX - this.getBoundingClientRect().left;
+  if(x < this.clientWidth / 3){ if(WR.i > 0){ WR.i--; drawWr(); } }
+  else if(WR.i < WR.slides.length - 1){ WR.i++; drawWr(); }
+});
+$("achcats").addEventListener("click", function(e){ var b = e.target.closest("button[data-share]"); if(b) shareAchievement(b.dataset.share); });
+
 /* Accounts */
 var authMode = "signin";
 function showAuth(){ $("auth").classList.remove("hidden"); LOCKED = true; }
@@ -1442,7 +1692,7 @@ $("logout").addEventListener("click", function(){
   clearTimeout(syncT);
   fetch("/api/logout", {method:"POST"}).catch(function(){}).then(function(){
     USER = null; try{ localStorage.removeItem("anchor-lastuser"); }catch(e){}
-    USER = null; CREATED = null; FR = null; FEED = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
+    USER = null; CREATED = null; FR = null; FEED = null; $("wrapped").classList.add("hidden"); applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
   });
 });
 
