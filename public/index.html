@@ -288,6 +288,23 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .hrow .what{display:flex;flex-direction:column;min-width:0}
 .hrow .what b{font:500 15px var(--body);overflow-wrap:anywhere}
 .hrow .what small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.hlegend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin:0 0 10px}
+.hlegend span{display:flex;align-items:center;gap:6px}
+.hscroll{background:var(--card);border-radius:16px;overflow-x:auto;padding:0 12px}
+.hgrid{min-width:min-content}
+.hg{display:grid;align-items:center;gap:6px;padding:9px 0;border-top:1px solid var(--line)}
+.hg.head{position:sticky;top:0;background:var(--card);border-top:0;align-items:end;border-bottom:1px solid var(--line);z-index:1}
+.hgd{display:flex;flex-direction:column}
+.hgd b{font:600 14px var(--body)}
+.hgd small{font-size:11px;color:var(--muted)}
+.hg.head .hgd{font-size:12px;color:var(--muted)}
+.hgn{font:600 12px var(--body);text-align:center;overflow-wrap:anywhere;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hc{display:grid;place-items:center}
+.hd{display:inline-block;width:22px;height:22px;border-radius:50%;background:transparent;border:2px solid var(--line);box-sizing:border-box}
+.hlegend .hd{width:12px;height:12px;border-width:1.5px}
+.hd.Yes{background:var(--done);border-color:var(--done)}
+.hd.Partly{background:var(--warn);border-color:var(--warn)}
+.hd.No{background:var(--no);border-color:var(--no)}
 .hnone{margin:0;font-size:14px;color:var(--muted)}
 .soon{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;font:700 22px var(--display);color:var(--muted)}
 /* Widget tab (prototype only) */
@@ -746,26 +763,31 @@ function renderWidget(){
 function renderHistory(){
   var box = $("histlist");
   if(!S.log.length){ box.innerHTML = '<div class="empty">No check-ins yet. Answer your daily check-in and each day shows up here.</div>'; return; }
-  var byDay = {}, first = Infinity;
+  var byDay = {}, first = Infinity, names = {}, order = [];
+  S.goals.forEach(function(g){ names[g.id] = g.goal; order.push(g.id); });
   S.log.forEach(function(e){
     var k = ymd(new Date(e.ts));
-    (byDay[k] = byDay[k] || {})[e.gid] = e;      // last answer per goal per day
+    (byDay[k] = byDay[k] || {})[e.gid] = e.answer;      // last answer per goal per day
     first = Math.min(first, dayNum(k));
+    if(!(e.gid in names)){ names[e.gid] = e.goal; order.push(e.gid); }
   });
-  var todayN = dayNum(today()), out = [];
+  var cols = order.length, tpl = "grid-template-columns:78px repeat("+cols+",minmax(64px,1fr))";
+  var todayN = dayNum(today());
+  var html = '<div class="hlegend"><span><i class="hd Yes"></i>Yes</span><span><i class="hd Partly"></i>Partly</span><span><i class="hd No"></i>No</span><span><i class="hd"></i>No check-in</span></div>' +
+    '<div class="hscroll"><div class="hgrid" role="table" aria-label="Check-in history"><div class="hg head" style="'+tpl+'" role="row"><span class="hgd" role="columnheader">Day</span>' +
+    order.map(function(g){ return '<span class="hgn" role="columnheader" title="'+esc(names[g]).replace(/"/g,"&quot;")+'">'+esc(names[g])+'</span>'; }).join("") + '</div>';
   for(var n = todayN; n >= first; n--){
     var key = keyFromNum(n), p = key.split("-");
     var d = new Date(+p[0], +p[1]-1, +p[2]);
-    var label = n === todayN ? "Today" : n === todayN - 1 ? "Yesterday" : d.toLocaleDateString(undefined,{weekday:"long"});
+    var label = n === todayN ? "Today" : n === todayN - 1 ? "Yesterday" : d.toLocaleDateString(undefined,{weekday:"short"});
     var sub = d.toLocaleDateString(undefined,{month:"short",day:"numeric"});
-    var es = byDay[key] ? Object.keys(byDay[key]).map(function(g){ return byDay[key][g]; }).sort(function(a,b){ return a.ts - b.ts; }) : [];
-    var tally = ["Yes","Partly","No"].map(function(a){ var c = es.filter(function(e){ return e.answer === a; }).length; return c ? c + " " + a : ""; }).filter(Boolean).join(", ");
-    out.push('<section class="hday"><div class="hhead"><b>'+label+' &middot; '+sub+'</b><span>'+(es.length ? tally : '')+'</span></div>' +
-      (es.length ? es.map(function(e){
-        return '<div class="hrow"><div class="what"><b>'+esc(e.goal)+'</b><small>'+esc(e.step || "")+' &middot; '+new Date(e.ts).toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})+'</small></div><span class="pill '+e.answer+'">'+e.answer+'</span></div>';
-      }).join("") : '<p class="hnone">No check-ins</p>') + '</section>');
+    html += '<div class="hg" style="'+tpl+'" role="row"><span class="hgd" role="rowheader"><b>'+label+'</b><small>'+sub+'</small></span>' +
+      order.map(function(g){
+        var a = byDay[key] && byDay[key][g];
+        return '<span class="hc" role="cell"><i class="hd '+(a || "")+'" aria-label="'+esc(names[g]).replace(/"/g,"&quot;")+': '+(a || "no check-in")+'"></i></span>';
+      }).join("") + '</div>';
   }
-  box.innerHTML = out.join("");
+  box.innerHTML = html + '</div></div>';
 }
 
 var CREATED = null;
