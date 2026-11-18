@@ -278,10 +278,17 @@ async function makePlan(request, env) {
   const days = Number(body.days);
   if (!goal || !Number.isInteger(days) || days < 3 || days > 30) return json({ error: "bad_request" }, 400);
 
+  const why = String(body.why || "").trim().slice(0, 160);
+  const levels = { new: "a complete beginner", some: "someone who has done a little of this before", exp: "already experienced" };
+  const level = levels[body.level] || "";
+  const minutes = [5, 15, 30, 60].includes(Number(body.minutes)) ? Number(body.minutes) : 20;
   const prompt =
     "You are a practical coach. The person's goal: \"" + goal + "\".\n" +
+    (why ? "Why it matters to them: \"" + why + "\".\n" : "") +
+    (level ? "They are " + level + ".\n" : "") +
+    "They can spend about " + minutes + " minutes a day.\n" +
     "Break it into exactly " + days + " daily steps, one per day, in order. Each step is a small, concrete action " +
-    "that takes about 20 to 30 minutes, builds on the day before, and is written as an instruction (for example " +
+    "that fits in about " + minutes + " minutes, builds on the day before, and is written as an instruction (for example " +
     "\"Read 20 pages of your book\"). Keep each step under 60 characters. Make the last day a short review or wrap-up.\n" +
     "Reply with JSON only, no other text, in this shape: {\"steps\":[\"...\"]}";
 

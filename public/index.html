@@ -260,6 +260,14 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .daysel button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
 .goalform .alt{align-self:center;margin-top:8px}
 .goalform button:disabled{opacity:.6;cursor:default}
+.wq{display:block;font:600 17px var(--body);margin:2px 0 10px;color:var(--ink)}
+.wstep>.wq~.wq{margin-top:16px}
+.stepno{font-size:12px;color:var(--muted);margin:0 0 4px}
+.daysel.wrap{flex-wrap:wrap}
+.daysel.wrap button{flex:1 1 30%;padding:11px 6px}
+.wnav{display:flex;gap:10px}
+.wnav button[type="submit"]{flex:1}
+.wback{border:1px solid var(--line);background:var(--bg);color:var(--ink);font:600 15px var(--body);padding:14px 18px;border-radius:12px;cursor:pointer;margin-top:2px}
 .hint2{font-size:12px;color:var(--muted);margin:-2px 0 10px}
 .draft input.dp{width:100%;font:400 15px var(--body);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);margin-bottom:12px}
 .draft .dl{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
@@ -366,24 +374,54 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
     <p class="sub">Pick one or a couple, up to 3. Tell us the goal and we'll plan what to do each day.</p>
     <button type="button" class="addbtn" id="addbtn"><span aria-hidden="true">+</span>Add goal</button>
     <form class="goalform hidden" id="form">
-      <label for="newgoal">Your goal</label>
-      <input id="newgoal" type="text" maxlength="120" placeholder="Learn to cook five dinners" autocomplete="off">
-      <div id="planopts">
-        <label>How many days should the plan last?</label>
+      <p class="stepno" id="stepno"></p>
+      <div class="wstep" data-s="goal">
+        <label class="wq" for="newgoal">What's your goal?</label>
+        <input id="newgoal" type="text" maxlength="120" placeholder="Learn to cook five dinners" autocomplete="off">
+        <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
+      </div>
+      <div class="wstep hidden" data-s="why">
+        <label class="wq" for="newwhy">Why does it matter to you?</label>
+        <input id="newwhy" type="text" maxlength="160" placeholder="I want to feel healthier" autocomplete="off">
+        <p class="hint2">Optional. This helps the plan fit you.</p>
+      </div>
+      <div class="wstep hidden" data-s="level">
+        <label class="wq">Where are you starting from?</label>
+        <div class="daysel wrap" id="levelsel">
+          <button type="button" data-v="new" aria-pressed="true">Brand new</button>
+          <button type="button" data-v="some" aria-pressed="false">Done a bit</button>
+          <button type="button" data-v="exp" aria-pressed="false">Experienced</button>
+        </div>
+        <label class="wq">How much time can you give it each day?</label>
+        <div class="daysel" id="minsel">
+          <button type="button" data-m="5" aria-pressed="false">5 min</button>
+          <button type="button" data-m="15" aria-pressed="true">15 min</button>
+          <button type="button" data-m="30" aria-pressed="false">30 min</button>
+          <button type="button" data-m="60" aria-pressed="false">1 hr</button>
+        </div>
+      </div>
+      <div class="wstep hidden" data-s="days">
+        <label class="wq">How long should the plan last?</label>
         <div class="daysel" id="daysel">
           <button type="button" data-days="7" aria-pressed="true">7 days</button>
           <button type="button" data-days="14" aria-pressed="false">14 days</button>
           <button type="button" data-days="30" aria-pressed="false">30 days</button>
         </div>
       </div>
-      <label for="newstep" class="hidden" id="steplabel">Daily step</label>
-      <input id="newstep" class="hidden" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
-      <label for="newpartly">What counts as partly?</label>
-      <input id="newpartly" type="text" maxlength="80" placeholder="Read at least 5 pages" autocomplete="off">
-      <p class="hint2">Yes means you did the day's step. Say what Partly looks like for this goal.</p>
+      <div class="wstep hidden" data-s="step">
+        <label class="wq" for="newstep">What's the daily step?</label>
+        <input id="newstep" type="text" maxlength="60" placeholder="Read 20 pages" autocomplete="off">
+      </div>
+      <div class="wstep hidden" data-s="partly">
+        <label class="wq" for="newpartly">What counts as partly?</label>
+        <input id="newpartly" type="text" maxlength="80" placeholder="Read at least 5 pages" autocomplete="off">
+        <p class="hint2">Yes means you did the day's step. Say what Partly looks like for this goal.</p>
+      </div>
       <p class="errtxt hidden" id="planerr" role="alert"></p>
-      <button type="submit" id="makeplan">Make my plan</button>
-      <button type="button" class="linkbtn alt" id="manualtoggle">I'll write my own daily step</button>
+      <div class="wnav">
+        <button type="button" class="wback hidden" id="wback">Back</button>
+        <button type="submit" id="makeplan">Next</button>
+      </div>
       <button type="button" class="linkbtn alt" id="canceladd">Cancel</button>
     </form>
     <div class="draft hidden" id="draft"></div>
@@ -669,17 +707,28 @@ function earnedList(){
 
 /* Render */
 var draft = null, manual = false, planDays = 7, planning = false, adding = false;
+var wiz = {i:0, level:"new", minutes:15};
+function wizSteps(){ return manual ? ["goal","step","partly"] : ["goal","why","level","days","partly"]; }
+function resetWiz(){
+  wiz = {i:0, level:"new", minutes:15}; planDays = 7; manual = false;
+  ["newgoal","newwhy","newstep","newpartly"].forEach(function(id){ $(id).value = ""; });
+  showErr("");
+}
 
 function showErr(msg){ $("planerr").textContent = msg; $("planerr").classList.toggle("hidden", !msg); }
 
 function renderForm(){
-  $("planopts").classList.toggle("hidden", manual);
-  $("newstep").classList.toggle("hidden", !manual);
-  $("steplabel").classList.toggle("hidden", !manual);
-  $("makeplan").textContent = manual ? "Add goal" : (planning ? "Making your plan..." : "Make my plan");
+  var steps = wizSteps(); if(wiz.i >= steps.length) wiz.i = steps.length - 1;
+  var cur = steps[wiz.i], last = wiz.i === steps.length - 1;
+  Array.prototype.forEach.call(document.querySelectorAll("#form .wstep"), function(el){ el.classList.toggle("hidden", el.dataset.s !== cur); });
+  $("stepno").textContent = "Step " + (wiz.i + 1) + " of " + steps.length;
+  $("wback").classList.toggle("hidden", wiz.i === 0);
+  $("makeplan").textContent = last ? (manual ? "Add goal" : (planning ? "Making your plan..." : "Make my plan")) : "Next";
   $("makeplan").disabled = planning;
   $("manualtoggle").textContent = manual ? "Make a plan for me instead" : "I'll write my own daily step";
   Array.prototype.forEach.call($("daysel").children, function(b){ b.setAttribute("aria-pressed", +b.dataset.days === planDays); });
+  Array.prototype.forEach.call($("levelsel").children, function(b){ b.setAttribute("aria-pressed", b.dataset.v === wiz.level); });
+  Array.prototype.forEach.call($("minsel").children, function(b){ b.setAttribute("aria-pressed", +b.dataset.m === wiz.minutes); });
 }
 
 function renderDraft(){
@@ -709,9 +758,9 @@ function renderGoals(){
   }).join("") : '<li class="empty">No goals yet. Add your first one above.</li>';
 }
 
-function makePlan(goal, days, partly){
+function makePlan(goal, days, partly, extra){
   planning = true; showErr(""); renderForm();
-  fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days})})
+  fetch("/api/plan", {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({goal:goal, days:days, why:extra.why, level:extra.level, minutes:extra.minutes})})
     .then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
     .then(function(x){
       planning = false;
@@ -953,24 +1002,30 @@ function render(){
 /* Events */
 $("form").addEventListener("submit", function(e){
   e.preventDefault();
-  var g = $("newgoal").value.trim();
-  if(!g || S.goals.length >= MAX_GOALS || planning) return;
+  if(S.goals.length >= MAX_GOALS || planning) return;
+  var steps = wizSteps(), cur = steps[wiz.i], g = $("newgoal").value.trim();
+  if(cur === "goal" && !g){ showErr("Type your goal to continue."); return; }
+  if(cur === "step" && !$("newstep").value.trim()){ showErr("Add the daily step to continue."); return; }
+  showErr("");
+  if(wiz.i < steps.length - 1){ wiz.i++; renderForm(); var nx = document.querySelector('#form .wstep[data-s="'+steps[wiz.i]+'"] input[type=text]'); if(nx) nx.focus(); return; }
   if(manual){
-    var st = $("newstep").value.trim(); if(!st) return;
-    var ng = {id:uid(), goal:g, step:st};
+    var ng = {id:uid(), goal:g, step:$("newstep").value.trim()};
     var pt = $("newpartly").value.trim(); if(pt) ng.partly = pt;
     S.goals.push(ng);
-    $("newgoal").value = ""; $("newstep").value = ""; $("newpartly").value = ""; showErr(""); adding = false; render();
+    resetWiz(); adding = false; render();
     openVideo(ng.id, "rec");
   }else{
-    makePlan(g, planDays, $("newpartly").value.trim());
+    makePlan(g, planDays, $("newpartly").value.trim(), {why:$("newwhy").value.trim(), level:wiz.level, minutes:wiz.minutes});
   }
 });
+$("wback").addEventListener("click", function(){ if(wiz.i > 0){ wiz.i--; showErr(""); renderForm(); } });
+$("levelsel").addEventListener("click", function(e){ var b = e.target.closest("button[data-v]"); if(b){ wiz.level = b.dataset.v; renderForm(); } });
+$("minsel").addEventListener("click", function(e){ var b = e.target.closest("button[data-m]"); if(b){ wiz.minutes = +b.dataset.m; renderForm(); } });
 $("daysel").addEventListener("click", function(e){
   var b = e.target.closest("button[data-days]"); if(!b) return;
   planDays = +b.dataset.days; renderForm();
 });
-$("manualtoggle").addEventListener("click", function(){ manual = !manual; showErr(""); renderForm(); });
+$("manualtoggle").addEventListener("click", function(){ manual = !manual; wiz.i = 0; showErr(""); renderForm(); });
 $("draft").addEventListener("input", function(e){
   if(e.target.dataset && e.target.dataset.p){ if(draft) draft.partly = e.target.value; return; }
   var i = e.target.dataset && e.target.dataset.d; if(i === undefined || !draft) return;
@@ -984,15 +1039,15 @@ $("draft").addEventListener("click", function(e){
     var ng2 = {id:uid(), goal:draft.goal, plan:steps, start:today()};
     if(draft.partly && draft.partly.trim()) ng2.partly = draft.partly.trim();
     S.goals.push(ng2);
-    draft = null; $("newgoal").value = ""; $("newpartly").value = ""; adding = false; render();
+    draft = null; resetWiz(); adding = false; render();
     openVideo(ng2.id, "rec");
   }
 });
 $("addbtn").addEventListener("click", function(){
-  adding = true; render(); $("newgoal").focus();
+  resetWiz(); adding = true; render(); $("newgoal").focus();
 });
 $("canceladd").addEventListener("click", function(){
-  adding = false; draft = null; manual = false; showErr(""); $("newgoal").value = ""; $("newstep").value = ""; $("newpartly").value = ""; render();
+  adding = false; draft = null; resetWiz(); render();
 });
 $("goallist").addEventListener("click", function(e){
   var v = e.target.closest("button[data-vid]");
