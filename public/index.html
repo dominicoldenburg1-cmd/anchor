@@ -771,13 +771,18 @@ function renderWidget(){
 function renderHistory(){
   var box = $("histlist");
   if(!S.log.length){ box.innerHTML = '<div class="empty">No check-ins yet. Answer your daily check-in and each day shows up here.</div>'; return; }
-  var byDay = {}, first = Infinity, names = {}, order = [];
-  S.goals.forEach(function(g){ names[g.id] = g.goal; order.push(g.id); });
-  S.log.forEach(function(e){
-    var k = ymd(new Date(e.ts));
-    (byDay[k] = byDay[k] || {})[e.gid] = e.answer;      // last answer per goal per day
+  // One column per goal name, so a goal that was deleted and added again is not split in two.
+  var byDay = {}, first = Infinity, names = {}, order = [], col = {};
+  function colFor(id, title){
+    var key = String(title || "").trim().toLowerCase();
+    if(!(key in names)){ names[key] = title; order.push(key); }
+    col[id] = key; return key;
+  }
+  S.goals.forEach(function(g){ colFor(g.id, g.goal); });
+  S.log.slice().sort(function(a,b){ return a.ts - b.ts; }).forEach(function(e){
+    var k = ymd(new Date(e.ts)), c = (e.gid in col) ? col[e.gid] : colFor(e.gid, e.goal);
+    (byDay[k] = byDay[k] || {})[c] = e.answer;      // last answer per goal per day
     first = Math.min(first, dayNum(k));
-    if(!(e.gid in names)){ names[e.gid] = e.goal; order.push(e.gid); }
   });
   var cols = order.length, tpl = "grid-template-columns:78px repeat("+cols+",minmax(64px,1fr))";
   var todayN = dayNum(today());
