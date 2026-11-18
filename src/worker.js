@@ -190,6 +190,26 @@ async function friendsRoute(path, request, env) {
   if (!me) return json({ error: "unauthorized" }, 401);
   if (path === "/api/friends") return json(await listFriends(env, me));
 
+  if (path === "/api/friends/feed") {
+    const res = await env.DB.prepare(
+      "SELECT u.username AS username, u.name AS name, u.pic AS pic, s.json AS json " +
+      "FROM friends f JOIN users u ON u.id = (CASE WHEN f.requester = ? THEN f.addressee ELSE f.requester END) " +
+      "LEFT JOIN states s ON s.user_id = u.id WHERE f.status = 'accepted' AND (f.requester = ? OR f.addressee = ?)"
+    ).bind(me.id, me.id, me.id).all();
+    const friends = (res.results || []).slice(0, 100).map((r) => {
+      let goals = [], log = [];
+      if (r.json) {
+        try {
+          const s = JSON.parse(r.json);
+          goals = (Array.isArray(s.goals) ? s.goals : []).slice(0, 10).map((g) => ({ id: String(g.id), goal: String(g.goal || "").slice(0, 120) }));
+          log = (Array.isArray(s.log) ? s.log : []).slice(-3000).map((e) => ({ gid: String(e.gid), answer: e.answer, ts: Number(e.ts) || 0 }));
+        } catch (e) {}
+      }
+      return { username: r.username, name: r.name || "", pic: r.pic || "", goals, log };
+    });
+    return json({ friends });
+  }
+
   if (path === "/api/friends/profile") {
     const uname = cleanUsername(new URL(request.url).searchParams.get("username"));
     const t = uname ? await env.DB.prepare("SELECT id, username, name, pic, created FROM users WHERE username = ?").bind(uname).first() : null;
@@ -307,7 +327,7 @@ export default {
 
       const accountRoutes = {
         "/api/signup": "POST", "/api/login": "POST", "/api/logout": "POST", "/api/me": "GET", "/api/state": "PUT", "/api/profile": "PUT",
-        "/api/friends": "GET", "/api/friends/profile": "GET", "/api/friends/add": "POST", "/api/friends/accept": "POST", "/api/friends/remove": "POST",
+        "/api/friends": "GET", "/api/friends/profile": "GET", "/api/friends/feed": "GET", "/api/friends/add": "POST", "/api/friends/accept": "POST", "/api/friends/remove": "POST",
       };
       if (accountRoutes[path]) {
         if (!env.DB) return json({ error: "not_configured" }, 501);

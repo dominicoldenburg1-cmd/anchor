@@ -306,6 +306,13 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 .hd.Partly{background:var(--warn);border-color:var(--warn)}
 .hd.No{background:var(--no);border-color:var(--no)}
 .hnone{margin:0;font-size:14px;color:var(--muted)}
+.feed{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.feed .medal{width:40px;height:40px;border-radius:50%;background:var(--done);color:#fff;display:grid;place-items:center;flex:none}
+.feed .medal svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.feed .ftxt{flex:1;min-width:0;font-size:15px;line-height:1.3}
+.feed .ftxt small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.fwho{display:flex;align-items:center;gap:6px;flex:none}
+.fwho .fav{width:32px;height:32px;font-size:13px}
 .soon{background:var(--card);border-radius:20px;padding:40px 20px;text-align:center;font:700 22px var(--display);color:var(--muted)}
 /* Widget tab (prototype only) */
 .banner{background:var(--banner-bg);color:var(--banner-ink);border-radius:12px;padding:10px 14px;font-size:13px;margin-bottom:16px}
@@ -417,7 +424,8 @@ li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius
 
   <main class="screen hidden" id="screen-social">
     <h1>Social</h1>
-    <div class="soon">Coming soon</div>
+    <p class="eyebrow">What your friends have earned</p>
+    <div id="feedlist"></div>
   </main>
 
   <main class="screen hidden" id="screen-widget">
@@ -1176,6 +1184,52 @@ $("vidfile").addEventListener("change", function(){
 });
 $("vidclose").addEventListener("click", closeVideo);
 
+var FEED = null, feedState = "idle";
+function achDates(d){
+  // When did this friend first reach each achievement? Replay their log day by day.
+  var saved = S, out = {};
+  try{
+    var log = d.log.filter(function(e){ return e && e.ts; }).sort(function(a,b){ return a.ts - b.ts; });
+    var dayEnd = {}, keys = [];
+    log.forEach(function(e){ var k = ymd(new Date(e.ts)); if(!(k in dayEnd)) keys.push(k); dayEnd[k] = e.ts; });
+    keys.forEach(function(k){
+      if(Object.keys(out).length === ACH.length) return;
+      S = {goals:d.goals, log:log.filter(function(e){ return ymd(new Date(e.ts)) <= k; }), seenAch:[], profile:{}};
+      var s = stats();
+      ACH.forEach(function(a){ if(!(a.t in out) && a.v(s) >= a.n) out[a.t] = dayEnd[k]; });
+    });
+  } finally { S = saved; }
+  return out;
+}
+function ago(ts){
+  var n = dayNum(today()) - dayNum(ymd(new Date(ts)));
+  return n <= 0 ? "Today" : n === 1 ? "Yesterday" : n < 7 ? n + " days ago" : new Date(ts).toLocaleDateString(undefined,{month:"short",day:"numeric"});
+}
+function renderFeed(){
+  var box = $("feedlist");
+  if(!USER){ box.innerHTML = '<div class="empty">Sign in to see what your friends are earning.</div>'; return; }
+  if(!FEED){ box.innerHTML = '<div class="empty">' + (feedState === "error" ? "Couldn't load updates. Pull this tab again in a moment." : "Loading...") + '</div>'; return; }
+  if(!FEED.length){ box.innerHTML = '<div class="empty">No updates yet. Add friends from your account (top right), and their achievements show up here.</div>'; return; }
+  var items = [];
+  FEED.forEach(function(f){
+    var dt = achDates(f);
+    ACH.forEach(function(a){ if(a.t in dt) items.push({f:f, a:a, ts:dt[a.t]}); });
+  });
+  if(!items.length){ box.innerHTML = '<div class="empty">Your friends haven\'t earned any achievements yet.</div>'; return; }
+  items.sort(function(x,y){ return y.ts - x.ts; });
+  box.innerHTML = items.slice(0, 50).map(function(i){
+    return '<div class="feed" data-view="'+esc(i.f.username)+'" role="button" tabindex="0"><span class="fav">'+friendAvatar(i.f)+'</span><div class="ftxt"><b>'+esc(i.f.name || i.f.username)+'</b> earned <b>'+esc(i.a.t)+'</b><small>'+esc(i.a.d)+' &middot; '+ago(i.ts)+'</small></div><span class="medal">'+ICON[i.a.icon]+'</span></div>';
+  }).join("");
+}
+function loadFeed(){
+  if(!USER){ FEED = null; renderFeed(); return; }
+  renderFeed();
+  fetch("/api/friends/feed").then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if(d && Array.isArray(d.friends)){ FEED = d.friends; feedState = "ok"; } else if(!FEED) feedState = "error";
+    renderFeed();
+  }).catch(function(){ if(!FEED) feedState = "error"; renderFeed(); });
+}
+$("feedlist").addEventListener("click", function(e){ var r = e.target.closest("[data-view]"); if(r){ openAccount(); viewFriend(r.dataset.view); } });
 function setTab(name){
   tabNow = name;
   ["goals","today","ach","history","social","widget"].forEach(function(n){
@@ -1183,11 +1237,12 @@ function setTab(name){
     $("tab-"+n).setAttribute("aria-selected", n === name);
   });
   render();
+  if(name === "social") loadFeed();
 }
 document.querySelector(".tabs").addEventListener("click", function(e){
   var b = e.target.closest("button[data-tab]"); if(b) setTab(b.dataset.tab);
 });
-document.addEventListener("visibilitychange", function(){ if(!document.hidden) render(); });
+document.addEventListener("visibilitychange", function(){ if(!document.hidden){ render(); if(tabNow === "social") loadFeed(); } });
 
 /* Accounts */
 var authMode = "signin";
@@ -1303,7 +1358,7 @@ $("logout").addEventListener("click", function(){
   clearTimeout(syncT);
   fetch("/api/logout", {method:"POST"}).catch(function(){}).then(function(){
     USER = null; try{ localStorage.removeItem("anchor-lastuser"); }catch(e){}
-    USER = null; CREATED = null; FR = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
+    USER = null; CREATED = null; FR = null; FEED = null; applyState(null); closeAccount(); showAuth(); setAuthMode("signin"); $("authuser").value = ""; render();
   });
 });
 
